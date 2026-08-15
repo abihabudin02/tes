@@ -677,7 +677,7 @@
                             </div>
                             <div class="flex gap-2 w-full xl:w-auto">
                                 <button onclick="openGeminiSettings()" class="flex-1 xl:flex-none justify-center px-3 py-2 bg-bgPrimary border border-borderMain rounded-xl text-textSecondary hover:text-white text-[10px] font-semibold flex items-center gap-2"><i class="ph-bold ph-gear"></i> Worker Settings</button>
-                                <button onclick="runAIStockAnalysis()" id="aiAnalyzeBtn" class="flex-1 xl:flex-none justify-center px-5 py-2 bg-gradient-to-r from-accentPurple to-pink-500 text-white font-bold rounded-xl shadow-glow-purple text-[10px] flex items-center gap-2"><i class="ph-bold ph-sparkle"></i> Analyze</button>
+                                <button type="button" onclick="runAIStockAnalysis(event)" id="aiAnalyzeBtn" class="flex-1 xl:flex-none justify-center px-5 py-2 bg-gradient-to-r from-accentPurple to-pink-500 text-white font-bold rounded-xl shadow-glow-purple text-[10px] flex items-center gap-2"><i class="ph-bold ph-sparkle"></i> Analyze</button>
                             </div>
                         </div>
 
@@ -3081,23 +3081,29 @@
             renderLocalRisk();
         }
 
-        async function runAIStockAnalysis() {
-            updateAIVisuals();
-            const btn=document.getElementById('aiAnalyzeBtn'), status=document.getElementById('aiStatusText'), result=document.getElementById('aiResult');
-            const endpoint=(localStorage.getItem('LMS_AI_PROXY_ENDPOINT')||AI_PROXY_ENDPOINT||'').trim();
-            const payload=buildAIDataPayload();
+        async function runAIStockAnalysis(event) {
+            if (event) { event.preventDefault(); event.stopPropagation(); }
+            const btn=document.getElementById('aiAnalyzeBtn');
+            const status=document.getElementById('aiStatusText');
+            const result=document.getElementById('aiResult');
+            try {
+                if (!btn || !status || !result) throw new Error('Komponen AI Analyst tidak ditemukan di halaman.');
+                btn.disabled=true;
+                btn.innerHTML='<i class="ph-bold ph-spinner-gap animate-spin"></i> Analyzing...';
+                status.innerText='Menyiapkan data KPI, trend, SKU, segment, risiko dan action plan...';
 
-            if(!endpoint || endpoint.includes('YOUR-WORKER-NAME')){
-                renderLocalAI();
-                status.innerText='Worker AI belum dikonfigurasi. Buka Gemini Settings dan masukkan URL /analyze Cloudflare Worker.';
-                return;
-            }
+                // Visuals are best-effort; an exception here must not prevent the AI request.
+                try { updateAIVisuals(); } catch (visualErr) { console.warn('Visual update warning:', visualErr); }
 
-            btn.disabled=true;
-            btn.innerHTML='<i class="ph-bold ph-spinner-gap animate-spin"></i> Analyzing...';
-            status.innerText='Menganalisis KPI, trend, SKU, segment, risiko dan action plan...';
+                const endpoint=(localStorage.getItem('LMS_AI_PROXY_ENDPOINT')||AI_PROXY_ENDPOINT||'').trim();
+                if(!endpoint || endpoint.includes('YOUR-WORKER-NAME')) {
+                    throw new Error('Worker AI belum dikonfigurasi. Gunakan endpoint /analyze Cloudflare Worker.');
+                }
 
-            const prompt = `Anda adalah Senior Supply Chain & Warehouse Executive Analyst untuk perusahaan manufaktur mortar.
+                const payload=buildAIDataPayload();
+                status.innerText='Mengirim data ke Cloudflare Worker dan Gemini...';
+
+                const prompt = `Anda adalah Senior Supply Chain & Warehouse Executive Analyst untuk perusahaan manufaktur mortar.
 Buat analisis komprehensif berdasarkan DATA DASHBOARD JSON berikut. Jangan mengarang angka. Gunakan Bahasa Indonesia profesional, jelas dan bernilai untuk Management Review.
 
 STRUKTUR OUTPUT WAJIB DAN DETAIL:
@@ -3115,25 +3121,27 @@ Jangan hanya mengulang angka. Jelaskan 'so what', dampak operasional dan keputus
 DATA:
 ${JSON.stringify(payload)}`;
 
-            try{
                 const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:GEMINI_MODEL,prompt,data:payload})});
-                const data=await res.json();
+                const raw=await res.text();
+                let data={};
+                try { data=raw ? JSON.parse(raw) : {}; } catch(e) { throw new Error(`Respons Worker bukan JSON: ${raw.slice(0,300)}`); }
                 if(!res.ok) throw new Error(data?.error||data?.message||`HTTP ${res.status}`);
-                const text=(data.analysis||data.text||'').trim();
-                if(!text) throw new Error('AI tidak mengembalikan teks.');
+                const text=(data.analysis||data.text||data.output_text||'').trim();
+                if(!text) throw new Error(`Worker berhasil tetapi tidak mengembalikan teks analisis. Respons: ${raw.slice(0,500)}`);
 
                 result.innerHTML=`<div class="prose-ai"><div class="ai-provenance"><span><i class="ph-fill ph-sparkle"></i> GEMINI ${data.model||GEMINI_MODEL}</span><span>Executive Analysis</span></div>${renderAIText(text)}</div>`;
                 status.innerText='Analisis komprehensif AI selesai. Scroll ke bawah untuk Executive Management Analysis.';
                 showToast('AI Analysis','Analisis komprehensif berhasil dibuat.','success');
                 document.getElementById('aiFinalAnalysisSection')?.scrollIntoView({behavior:'smooth',block:'start'});
-            }catch(err){
-                console.error(err);
-                renderLocalAI();
-                status.innerText=`AI gagal digunakan: ${err.message}. Visual dashboard tetap tersedia dan Local Insight ditampilkan.`;
-                showToast('AI Error','Fallback ke Local Insight.','warning');
-            }finally{
-                btn.disabled=false;
-                btn.innerHTML='<i class="ph-bold ph-sparkle"></i> Analyze';
+            } catch(err) {
+                console.error('AI Analyst Error:', err);
+                if (status) status.innerText=`AI gagal digunakan: ${err.message}`;
+                if (result) {
+                    result.innerHTML=`<div class="prose-ai"><div class="ai-provenance"><span><i class="ph-fill ph-warning"></i> AI ERROR</span><span>Diagnostic</span></div><p class="text-statusWarning"><strong>Analisis belum berhasil dijalankan.</strong></p><p>${String(err.message||err).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p><p>Visual dashboard tetap tersedia. Perbaiki error ini lalu klik Analyze kembali.</p></div>`;
+                }
+                showToast('AI Error', String(err.message||err).slice(0,120), 'warning');
+            } finally {
+                if (btn) { btn.disabled=false; btn.innerHTML='<i class="ph-bold ph-sparkle"></i> Analyze'; }
             }
         }
 
@@ -3770,6 +3778,15 @@ ${JSON.stringify(payload)}`;
         }
         // Initialize AI panel snapshot after the existing app initialization.
         setTimeout(updateAISnapshot, 1500);
+    </script>
+    <script>
+    window.addEventListener('load', () => {
+      const b = document.getElementById('aiAnalyzeBtn');
+      if (b && !b.dataset.aiBound) {
+        b.dataset.aiBound = '1';
+        b.addEventListener('click', (ev) => runAIStockAnalysis(ev));
+      }
+    });
     </script>
 </body>
 </html>
