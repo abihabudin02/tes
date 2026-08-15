@@ -6,16 +6,12 @@
     <title>My SCM Center Portal</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
 
     <style>
-        /* Custom Animations */
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
@@ -33,23 +29,17 @@
         .animate-marquee:hover {
             animation-play-state: paused;
         }
-        
-        /* Glassmorphism Utilities */
         .glass-panel {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.6);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
         }
-        
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-
-        /* --- INTRO ANIMATIONS --- */
-        .animate-fadeOut { animation: fadeOut 0.5s ease-in forwards; animation-delay: 0.1s; }
         @keyframes fadeOut { to { opacity: 0; } }
+        .animate-fadeOut { animation: fadeOut 0.5s ease-in forwards; }
     </style>
 </head>
 <body class="bg-slate-50">
@@ -57,7 +47,6 @@
 
     <script type="text/babel">
         const API_URL = "https://script.google.com/macros/s/AKfycbybodmJ8v5WdGFpIRsTaWPMi-xV02c-ytTnF6HflTFfIBpYyDx5xBEoUduHlmRuPFjemA/exec";
-
         const { useState, useEffect, useRef } = React;
 
         const LucideIcon = ({ name, className, ...props }) => {
@@ -93,7 +82,7 @@
             'FileCheck', 'PlayCircle', 'LayoutDashboard', 'Briefcase', 'Globe', 'ExternalLink', 'Folder', 
             'QrCode', 'ChevronDown', 'Settings', 'Plus', 'Trash2', 'Save', 'List'
         ];
-        // --- CLOUD SYNC FUNCTION ---
+
         const saveMenuToCloud = (menuData) => {
             fetch(API_URL, {
                 method: "POST",
@@ -111,9 +100,7 @@
             const [hasStarted, setHasStarted] = useState(false);
             const [videoEnded, setVideoEnded] = useState(false);
             const videoRef = useRef(null);
-
-            // Menggunakan format link direct download Google Drive
-            const videoUrl = "https://drive.google.com/uc?export=download&id=12SNRptXMwry1JrlhRIX80U5mqYzMBE6Q";
+            const videoUrl = "buat_vidio_intro_dari_gambar_i.mp4";
 
             const handleStartPlay = (e) => {
                 e.stopPropagation();
@@ -121,11 +108,20 @@
                 if (videoRef.current) {
                     videoRef.current.play().catch(error => {
                         console.error("Autoplay failed:", error);
+                        setVideoEnded(true);
                     });
                 }
+                setTimeout(() => {
+                    setVideoEnded(true);
+                }, 10000);
             };
 
             const handleVideoEnd = () => {
+                setVideoEnded(true);
+            };
+
+            const handleVideoError = () => {
+                console.error("Error: Gagal memuat video lokal.");
                 setVideoEnded(true);
             };
 
@@ -146,14 +142,13 @@
                             ref={videoRef}
                             className="w-full h-full object-contain"
                             onEnded={handleVideoEnd}
-                            controls={false}
+                            onError={handleVideoError}
                             playsInline
                         >
                             <source src={videoUrl} type="video/mp4" />
                             Browser Anda tidak mendukung tag video.
                         </video>
 
-                        {/* Tombol Play Awal untuk Bypass Autoplay Policy Browser */}
                         {!hasStarted && (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-30">
                                 <button 
@@ -166,7 +161,6 @@
                             </div>
                         )}
                         
-                        {/* Tombol Masuk Aplikasi setelah video selesai */}
                         {videoEnded && !isClicked && (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-30">
                                  <button 
@@ -179,7 +173,6 @@
                             </div>
                         )}
                         
-                        {/* Tombol lewati saat video bermain */}
                         {hasStarted && !videoEnded && !isClicked && (
                              <button 
                                 onClick={(e) => {
@@ -597,12 +590,10 @@
             const [scrolled, setScrolled] = useState(false);
             const [mobileSubmenu, setMobileSubmenu] = useState(null);
             
-            // ADMIN STATE
             const [adminLoginOpen, setAdminLoginOpen] = useState(false);
             const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
             const [isLoadingMenu, setIsLoadingMenu] = useState(true);
 
-            // DEFAULT MENUS (Fallback)
             const DEFAULT_MENUS = [
                 { id: 'Home', icon: 'Home', label: 'Home' },
                 { id: 'Inventory', icon: 'Box', label: 'Inventory', url: 'https://script.google.com/macros/s/AKfycbyfxx-1B9TAINHUuT4-Zglv_vI3L8QaqzIwMIrlycLofcaaFfdCqJRJUrACewkCLPSi/exec' }, 
@@ -627,7 +618,6 @@
                     })
                     .catch(err => { console.error(err); setIsLoadingMenu(false); });
                 
-                // Kunci scroll saat intro berjalan
                 if (showIntro) {
                     document.body.style.overflow = 'hidden';
                 } else {
@@ -664,8 +654,6 @@
 
             return (
                 <div className="min-h-screen bg-slate-50 font-sans pb-20 relative overflow-x-hidden selection:bg-blue-200">
-                    
-                    {/* Render Intro Screen jika status showIntro = true */}
                     {showIntro && <IntroScreen onComplete={() => setShowIntro(false)} />}
 
                     <AuthModal isOpen={adminLoginOpen} onClose={() => setAdminLoginOpen(false)} onSuccess={handleAdminLoginSuccess} title="Admin Access" requiredUser="admin" requiredPass="123" />
@@ -683,7 +671,6 @@
                                     <span className="text-xl font-bold text-slate-800 tracking-tight hidden md:inline">My SCM <span className="text-blue-600">Center</span></span>
                                 </div>
                                 <div className="hidden lg:flex items-center bg-slate-100/50 p-1 rounded-xl border border-white/40 shadow-sm backdrop-blur-md">
-                                    
                                     {menuItems.map((item) => {
                                         const isActive = activeTab === item.id;
                                         if (item.submenu) {
