@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logistics Monitoring System (LMS) | Enterprise Logistics Monitoring Dashboard</title>
+    <title>Logistics Monitoring System (LMS) | AI Stock Intelligence V2</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -644,7 +644,7 @@
                             </div>
                             <div class="p-4 md:p-6 flex-1 overflow-y-auto">
                                 <div id="aiStatusBox" class="rounded-xl border border-accentPurple/20 bg-accentPurple/5 p-4 mb-5">
-                                    <div class="flex items-start gap-3"><i class="ph-fill ph-info text-accentPurple text-xl mt-0.5"></i><div><p class="text-white text-xs font-bold">Siap menganalisis</p><p id="aiStatusText" class="text-[10px] text-textSecondary mt-1">Klik Analyze untuk mengirim ringkasan data dashboard ke Gemini melalui Cloudflare Worker. Jika Worker belum diatur, sistem tetap memberikan insight lokal berbasis KPI.</p></div></div>
+                                    <div class="flex items-start gap-3"><i class="ph-fill ph-info text-accentPurple text-xl mt-0.5"></i><div><p class="text-white text-xs font-bold">Siap menganalisis</p><p id="aiStatusText" class="text-[10px] text-textSecondary mt-1">Klik Analyze untuk mengirim data MTD, SKU, segment, dan trend transaksi ke Gemini melalui Cloudflare Worker. Visual AI akan ikut diperbarui.</p></div></div>
                                 </div>
                                 <div id="aiResult" class="space-y-4">
                                     <div class="rounded-xl border border-borderMain bg-bgPrimary/40 p-5 text-center">
@@ -665,7 +665,21 @@
                                     <div class="bg-bgPrimary/50 rounded-xl p-3 border border-borderMain"><span class="text-[9px] text-textSecondary">OUT Bulan Ini</span><div id="aiSnapOut" class="text-lg font-black text-statusDanger font-mono mt-1">0</div></div>
                                 </div>
                             </div>
-                            <div class="glass-panel rounded-2xl border border-borderMain p-4 md:p-5 flex-1">
+                            <div class="glass-panel rounded-2xl border border-borderMain p-4 md:p-5">
+                                <h4 class="text-white text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2"><i class="ph-fill ph-chart-line text-accentCyan"></i> AI Trend</h4>
+                                <div class="h-[220px] relative"><canvas id="aiTrendChart"></canvas></div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="glass-panel rounded-2xl border border-borderMain p-4 md:p-5">
+                                    <h4 class="text-white text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2"><i class="ph-fill ph-chart-bar text-accentPurple"></i> Top SKU</h4>
+                                    <div class="h-[260px] relative"><canvas id="aiTopSkuChart"></canvas></div>
+                                </div>
+                                <div class="glass-panel rounded-2xl border border-borderMain p-4 md:p-5">
+                                    <h4 class="text-white text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2"><i class="ph-fill ph-chart-donut text-statusWarning"></i> Segment Mix</h4>
+                                    <div class="h-[260px] relative"><canvas id="aiSegmentChart"></canvas></div>
+                                </div>
+                            </div>
+                            <div class="glass-panel rounded-2xl border border-borderMain p-4 md:p-5">
                                 <h4 class="text-white text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2"><i class="ph-fill ph-lightbulb text-statusWarning"></i> Local Risk Check</h4>
                                 <div id="aiLocalRisk" class="space-y-2 text-[10px] text-textSecondary">Belum dihitung.</div>
                             </div>
@@ -981,9 +995,9 @@
         <div class="bg-bgCard border border-borderMain w-full max-w-lg rounded-2xl p-5 md:p-6 shadow-glass relative transform scale-95 transition-transform duration-300" id="geminiSettingsContainer">
             <button onclick="closeGeminiSettings()" class="absolute right-4 top-4 text-textSecondary hover:text-white"><i class="ph-bold ph-x text-xl"></i></button>
             <div class="flex items-center gap-3 mb-5"><div class="p-3 rounded-xl bg-accentPurple/10 border border-accentPurple/20"><i class="ph-fill ph-sparkle text-accentPurple text-xl"></i></div><div><h3 class="text-white font-black">Gemini AI Settings</h3><p class="text-[10px] text-textSecondary">Konfigurasi koneksi Cloudflare Worker untuk AI Stock Analyst.</p></div></div>
-            <label class="block text-[10px] font-bold text-textSecondary uppercase tracking-widest mb-2">https://lms-stock-ai-proxy.abihabudin-02.workers.dev/analyze</label>
+            <label class="block text-[10px] font-bold text-textSecondary uppercase tracking-widest mb-2">Cloudflare Worker /analyze URL</label>
             <input id="aiProxyEndpointInput" type="url" placeholder="https://nama-worker.subdomain.workers.dev/analyze" class="w-full bg-bgPrimary border border-borderMain text-white rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-accentPurple">
-            <div class="mt-3 p-3 rounded-xl bg-statusWarning/5 border border-statusWarning/20 text-[10px] text-textSecondary leading-relaxed">API key Gemini tidak disimpan di browser. Worker menyimpan API key sebagai Secret dan meneruskan permintaan ke Gemini secara server-side.</div>
+            <div class="mt-3 p-3 rounded-xl bg-statusSuccess/5 border border-statusSuccess/20 text-[10px] text-textSecondary leading-relaxed">API key Gemini disimpan sebagai <b class="text-statusSuccess">Cloudflare Worker Secret</b>. Jangan masukkan API key ke HTML atau GitHub.</div>
             <div class="flex justify-end gap-2 mt-5"><button onclick="closeGeminiSettings()" class="px-4 py-2 rounded-xl border border-borderMain text-textSecondary text-xs font-semibold">Batal</button><button onclick="saveGeminiSettings()" class="px-4 py-2 rounded-xl bg-accentPurple text-white text-xs font-bold">Simpan Endpoint</button></div>
         </div>
     </div>
@@ -1082,6 +1096,9 @@
         let trendLineChartInstance = null;
         let comparisonDonutChartInstance = null;
         let stockDepletionChartInstance = null;
+        let aiTrendChartInstance = null;
+        let aiTopSkuChartInstance = null;
+        let aiSegmentChartInstance = null;
         let chartAnimInterval = null;
         let isAuthenticated = false;
         let pendingTargetTab = null;
@@ -2677,9 +2694,9 @@
         }
 
         // =========================
-        // AI STOCK ANALYST / GEMINI
+        // AI STOCK ANALYST V2 / GEMINI
         // =========================
-        const AI_PROXY_ENDPOINT = 'https://YOUR-WORKER-NAME.YOUR-SUBDOMAIN.workers.dev/analyze';
+        const AI_PROXY_ENDPOINT = 'https://lms-stock-ai-proxy.abihabudin-02.workers.dev/analyze';
         const GEMINI_MODEL = 'gemini-2.5-flash';
 
         function openGeminiSettings() {
@@ -2698,11 +2715,28 @@
         }
         function saveGeminiSettings() {
             const endpoint = (document.getElementById('aiProxyEndpointInput').value || '').trim();
-            if (endpoint) localStorage.setItem('LMS_AI_PROXY_ENDPOINT', endpoint.replace(/\/$/, ''));
-            else localStorage.removeItem('LMS_AI_PROXY_ENDPOINT');
+            if (!endpoint) {
+                localStorage.removeItem('LMS_AI_PROXY_ENDPOINT');
+                closeGeminiSettings();
+                showToast('AI Settings', 'Endpoint dihapus. Sistem kembali menggunakan endpoint default.', 'info');
+                return;
+            }
+            const normalized = endpoint.replace(/\/$/, '');
+            localStorage.setItem('LMS_AI_PROXY_ENDPOINT', normalized);
             closeGeminiSettings();
-            showToast('AI Settings', endpoint ? 'Worker endpoint tersimpan di browser.' : 'Endpoint dihapus.', endpoint ? 'success' : 'info');
+            showToast('AI Settings', 'Cloudflare Worker endpoint tersimpan.', 'success');
+            updateAIConnectionStatus();
         }
+
+        function updateAIConnectionStatus() {
+            const endpoint = (localStorage.getItem('LMS_AI_PROXY_ENDPOINT') || AI_PROXY_ENDPOINT || '').trim();
+            const status = document.getElementById('aiStatusText');
+            if (!status) return;
+            status.innerText = endpoint
+                ? `Worker siap: ${endpoint}`
+                : 'Worker belum dikonfigurasi. Klik Gemini Settings.';
+        }
+
         function updateAISnapshot() {
             const ton = summaryData.reduce((a,b)=>a+(Number(b.qtyTon)||0),0);
             const sku = summaryData.length;
@@ -2713,63 +2747,276 @@
             set('aiSnapSku', fmtNum(sku));
             set('aiSnapIn', inEl ? inEl.innerText : '0');
             set('aiSnapOut', outEl ? outEl.innerText : '0');
+
             const risk = [];
-            if (ton <= 0) risk.push('• Data FG kosong / belum tersinkron.');
-            if (inEl && outEl) {
-                const inN=parseFloat((inEl.innerText||'0').replace(/\./g,''))||0;
-                const outN=parseFloat((outEl.innerText||'0').replace(/\./g,''))||0;
-                if(outN>inN) risk.push(`• OUT lebih besar dari IN sebesar ${fmtNum(outN-inN)} ZAK — buffer stock menurun.`);
-                else if(inN>outN) risk.push(`• IN lebih besar dari OUT sebesar ${fmtNum(inN-outN)} ZAK — ada akumulasi stok.`);
-                else risk.push('• IN dan OUT relatif seimbang.');
-            }
+            const inN = inEl ? parseLocaleNumber(inEl.innerText) : 0;
+            const outN = outEl ? parseLocaleNumber(outEl.innerText) : 0;
+            const delta = inN - outN;
+            const util = parseFloat(String(document.getElementById('kpiSpacePercent')?.innerText || '0').replace(',', '.')) || 0;
+
+            if (ton <= 0) risk.push('Data FG kosong / belum tersinkron.');
+            if (delta < 0) risk.push(`OUT lebih tinggi dari IN sebesar ${fmtNum(Math.abs(delta))} ZAK — buffer stock cenderung menurun.`);
+            else if (delta > 0) risk.push(`IN lebih tinggi dari OUT sebesar ${fmtNum(delta)} ZAK — terdapat akumulasi stok.`);
+            else risk.push('IN dan OUT relatif seimbang.');
+            if (util >= 90) risk.push(`Utilisasi gudang ${fmtDec(util)}% — level kritis.`);
+            else if (util >= 75) risk.push(`Utilisasi gudang ${fmtDec(util)}% — perlu monitoring kapasitas.`);
             const sorted=[...summaryData].sort((a,b)=>(b.qtyTon||0)-(a.qtyTon||0));
-            if(sorted[0]) risk.push(`• SKU terbesar: ${sorted[0].sku} (${fmtDec(sorted[0].qtyTon)} Ton).`);
-            const el=document.getElementById('aiLocalRisk'); if(el) el.innerHTML=risk.length?risk.map(x=>`<div class="p-2 rounded-lg bg-bgPrimary/40 border border-borderMain">${x}</div>`).join(''):'<div>Belum ada data.</div>';
+            if(sorted[0]) risk.push(`SKU terbesar: ${sorted[0].sku} (${fmtDec(sorted[0].qtyTon)} Ton).`);
+            const el=document.getElementById('aiLocalRisk');
+            if(el) el.innerHTML = risk.length ? risk.map(x=>`<div class="p-2 rounded-lg bg-bgPrimary/40 border border-borderMain">${x}</div>`).join('') : '<div>Belum ada data.</div>';
         }
+
+        function parseLocaleNumber(value) {
+            const s = String(value ?? '').replace(/[^\d,.-]/g,'').trim();
+            if (!s) return 0;
+            const normalized = s.includes(',') && s.includes('.') ? s.replace(/\./g,'').replace(',','.')
+                : s.includes('.') ? s.replace(/\./g,'') : s.replace(',','.');
+            const n = Number(normalized);
+            return Number.isFinite(n) ? n : 0;
+        }
+
+        function getMonthContext() {
+            const now = new Date();
+            const y = now.getFullYear(), m = now.getMonth();
+            const days = new Date(y, m + 1, 0).getDate();
+            const today = now.getDate();
+            return { y, m, days, today };
+        }
+
+        function buildAIAnalyticsData() {
+            const { y, m, days, today } = getMonthContext();
+            const daily = Array.from({length: today}, (_,i)=>({ day:i+1, inZak:0, outZak:0, inTon:0, outTon:0, netZak:0 }));
+            const skuMove = {};
+
+            transactionRecords.forEach(rec => {
+                if (!rec?.dateObj || isNaN(rec.dateObj.getTime())) return;
+                if (rec.dateObj.getFullYear() !== y || rec.dateObj.getMonth() !== m) return;
+                const d = rec.dateObj.getDate();
+                if (d < 1 || d > today) return;
+                const type = String(rec.type||'').toUpperCase();
+                const isIn = type.includes('IN') || type.includes('MASUK') || type.includes('PRODUCTION') || type.includes('PRODUKSI');
+                const isOut = type.includes('OUT') || type.includes('KELUAR') || type.includes('OFFTAKE') || type.includes('DELIVERY') || type.includes('KIRIM');
+                if (!isIn && !isOut) return;
+                const zak = Number(rec.zak)||0;
+                const ton = Number(rec.ton)||((zak*(Number(rec.weight)||40))/1000);
+                const row = daily[d-1];
+                if (isIn) { row.inZak += zak; row.inTon += ton; }
+                if (isOut) { row.outZak += zak; row.outTon += ton; }
+                row.netZak = row.inZak - row.outZak;
+
+                const sku = rec.produk && rec.produk !== '-' ? rec.produk : 'UNKNOWN SKU';
+                if (!skuMove[sku]) skuMove[sku] = { sku, segment: rec.segment||'GENERAL', inZak:0, outZak:0, inTon:0, outTon:0 };
+                if (isIn) { skuMove[sku].inZak += zak; skuMove[sku].inTon += ton; }
+                if (isOut) { skuMove[sku].outZak += zak; skuMove[sku].outTon += ton; }
+            });
+
+            const totalTon = summaryData.reduce((a,b)=>a+(Number(b.qtyTon)||0),0);
+            const totalZak = summaryData.reduce((a,b)=>a+(Number(b.qtyZak)||0),0);
+            const segmentAgg = {};
+            summaryData.forEach(x => {
+                const seg = x.segment || 'GENERAL';
+                segmentAgg[seg] = (segmentAgg[seg]||0) + (Number(x.qtyTon)||0);
+            });
+
+            const skuStock = [...summaryData]
+                .sort((a,b)=>(b.qtyTon||0)-(a.qtyTon||0))
+                .slice(0,20)
+                .map(x => ({
+                    segment:x.segment, sku:x.sku, weightKg:x.weight,
+                    qtyZak:Number(x.qtyZak)||0, qtyTon:Number(x.qtyTon)||0,
+                    stockSharePct: totalTon > 0 ? ((Number(x.qtyTon)||0)/totalTon)*100 : 0
+                }));
+
+            const movement = Object.values(skuMove)
+                .map(x => ({...x, netZak:x.inZak-x.outZak, netTon:x.inTon-x.outTon}))
+                .sort((a,b)=>(b.outTon+a.inTon)-(a.outTon+b.inTon));
+
+            const monthInZak = parseLocaleNumber(document.getElementById('kpiMonthIn')?.innerText || 0);
+            const monthOutZak = parseLocaleNumber(document.getElementById('kpiMonthOut')?.innerText || 0);
+            const utilization = parseFloat(String(document.getElementById('kpiSpacePercent')?.innerText||'0').replace(',','.')) || 0;
+
+            return {
+                period: `${String(m+1).padStart(2,'0')}/${y} MTD`,
+                asOf: new Date().toISOString(),
+                totalFGTon: totalTon,
+                totalFGZak: totalZak,
+                activeSku: summaryData.length,
+                warehouseUtilizationPct: utilization,
+                warehouseCapacityTon: 2737,
+                monthInZak,
+                monthOutZak,
+                monthNetZak: monthInZak-monthOutZak,
+                segmentTon: segmentAgg,
+                topStockSku: skuStock,
+                skuMovementTop: movement.slice(0,20),
+                dailyTrend: daily
+            };
+        }
+
         function buildAIDataPayload() {
-            const ton = summaryData.reduce((a,b)=>a+(Number(b.qtyTon)||0),0);
-            const zak = summaryData.reduce((a,b)=>a+(Number(b.qtyZak)||0),0);
-            const inText=document.getElementById('kpiMonthIn')?.innerText||'0';
-            const outText=document.getElementById('kpiMonthOut')?.innerText||'0';
-            const space=document.getElementById('kpiSpacePercent')?.innerText||'0%';
-            const top=[...summaryData].sort((a,b)=>(b.qtyTon||0)-(a.qtyTon||0)).slice(0,15).map(x=>({segment:x.segment,sku:x.sku,weightKg:x.weight,qtyZak:x.qtyZak,qtyTon:x.qtyTon}));
-            const segmentAgg={};
-            summaryData.forEach(x=>segmentAgg[x.segment]=(segmentAgg[x.segment]||0)+(Number(x.qtyTon)||0));
-            return {date:new Date().toISOString().slice(0,10),totalFGTon:ton,totalFGZak:zak,warehouseUtilization:space,monthInZak:inText,monthOutZak:outText,segmentTon:segmentAgg,topSku:top,transactionRows:(transactionRawData.rows||[]).slice(-50)};
+            const d = buildAIAnalyticsData();
+            return {
+                ...d,
+                transactionRows: (transactionRawData.rows||[]).slice(-200),
+                generatedAt: new Date().toISOString()
+            };
         }
+
         function renderAIText(text) {
-            const safe = String(text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-            return safe.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+            const safe = String(text||'')
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            return safe
+                .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+                .replace(/^#{1,4}\s*(.+)$/gm,'<strong class="text-white">$1</strong>')
+                .replace(/\n/g,'<br>');
         }
+
         function renderLocalAI() {
-            const d=buildAIDataPayload();
-            const inN=parseFloat(String(d.monthInZak).replace(/\./g,''))||0;
-            const outN=parseFloat(String(d.monthOutZak).replace(/\./g,''))||0;
-            const delta=inN-outN;
-            const top=d.topSku.slice(0,5);
-            const trend=delta>0?`IN lebih tinggi dari OUT sebesar ${fmtNum(delta)} ZAK sehingga terdapat kecenderungan penambahan buffer stock.`:delta<0?`OUT lebih tinggi dari IN sebesar ${fmtNum(Math.abs(delta))} ZAK sehingga buffer stock cenderung tertekan.`:'IN dan OUT berada pada level seimbang.';
-            const risk=delta<0?'Prioritaskan monitoring SKU dengan stok rendah dan pastikan replenishment/produksi mengikuti laju delivery.':d.totalFGTon<=0?'Data stok belum tersedia; lakukan Sync terlebih dahulu.':'Pertahankan monitoring harian dan fokus pada SKU dengan kontribusi tonase terbesar.';
-            const html=`<div class="rounded-xl border border-accentPurple/20 bg-accentPurple/5 p-4 md:p-5"><div class="flex items-center gap-2 mb-3"><i class="ph-fill ph-brain text-accentPurple"></i><h4 class="text-white font-black text-sm">Executive Summary</h4><span class="ml-auto text-[8px] px-2 py-1 rounded bg-statusWarning/10 text-statusWarning border border-statusWarning/20">LOCAL INSIGHT</span></div><p class="text-[11px] text-textSecondary leading-relaxed">FG stock saat ini <b class="text-white">${fmtDec(d.totalFGTon)} Ton</b> dengan utilisasi gudang <b class="text-white">${d.warehouseUtilization}</b>. ${trend}</p></div><div class="rounded-xl border border-borderMain bg-bgPrimary/30 p-4 md:p-5"><h4 class="text-white font-bold text-xs mb-3">Key Findings</h4><div class="space-y-2 text-[10px] text-textSecondary">${top.map((x,i)=>`<div class="flex gap-2"><span class="text-accentCyan font-bold">${i+1}.</span><span><b class="text-white">${x.sku}</b> — ${fmtDec(x.qtyTon)} Ton (${fmtNum(x.qtyZak)} ZAK), segment ${x.segment}.</span></div>`).join('')}</div></div><div class="rounded-xl border border-statusWarning/20 bg-statusWarning/5 p-4 md:p-5"><h4 class="text-statusWarning font-bold text-xs mb-2">Risk & Recommended Action</h4><p class="text-[10px] text-textSecondary leading-relaxed">${risk}</p></div>`;
+            const d=buildAIAnalyticsData();
+            const delta=d.monthNetZak;
+            const trend = delta > 0
+                ? `IN lebih tinggi dari OUT sebesar <b class="text-statusSuccess">${fmtNum(delta)} ZAK</b>, menunjukkan kecenderungan akumulasi stok.`
+                : delta < 0
+                    ? `OUT lebih tinggi dari IN sebesar <b class="text-statusDanger">${fmtNum(Math.abs(delta))} ZAK</b>, menunjukkan tekanan pada buffer stock.`
+                    : 'IN dan OUT berada pada level seimbang.';
+            const top = d.topStockSku.slice(0,8);
+            const peakOut = d.dailyTrend.reduce((a,b)=>b.outZak>a.outZak?b:a,{day:0,outZak:0});
+            const peakIn = d.dailyTrend.reduce((a,b)=>b.inZak>a.inZak?b:a,{day:0,inZak:0});
+            const html = `
+                <div class="rounded-xl border border-accentPurple/20 bg-accentPurple/5 p-4 md:p-5">
+                    <div class="flex items-center gap-2 mb-3"><i class="ph-fill ph-brain text-accentPurple"></i><h4 class="text-white font-black text-sm">Executive Summary</h4><span class="ml-auto text-[8px] px-2 py-1 rounded bg-statusWarning/10 text-statusWarning border border-statusWarning/20">LOCAL INSIGHT</span></div>
+                    <p class="text-[11px] text-textSecondary leading-relaxed">
+                        FG stock <b class="text-white">${fmtDec(d.totalFGTon)} Ton</b> dengan utilisasi gudang <b class="text-white">${fmtDec(d.warehouseUtilizationPct)}%</b>.
+                        ${trend}
+                        Peak IN terjadi pada tanggal <b class="text-white">${peakIn.day}</b> (${fmtNum(peakIn.inZak)} ZAK) dan peak OUT pada tanggal <b class="text-white">${peakOut.day}</b> (${fmtNum(peakOut.outZak)} ZAK).
+                    </p>
+                </div>
+                <div class="rounded-xl border border-borderMain bg-bgPrimary/30 p-4 md:p-5">
+                    <h4 class="text-white font-bold text-xs mb-3">Key Findings</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px] text-textSecondary">
+                        ${top.map((x,i)=>`<div class="p-2 rounded-lg bg-bgPrimary/40 border border-borderMain"><span class="text-accentCyan font-bold">${i+1}. ${x.sku}</span><br>${fmtDec(x.qtyTon)} Ton · ${fmtNum(x.qtyZak)} ZAK · ${x.segment}</div>`).join('')}
+                    </div>
+                </div>
+                <div class="rounded-xl border border-statusWarning/20 bg-statusWarning/5 p-4 md:p-5">
+                    <h4 class="text-statusWarning font-bold text-xs mb-2">Risk & Recommended Action</h4>
+                    <div class="text-[10px] text-textSecondary leading-relaxed space-y-1">
+                        <p>• ${d.warehouseUtilizationPct >= 90 ? 'Kapasitas gudang sudah kritis; prioritaskan pengosongan area/penyesuaian inbound.' : d.warehouseUtilizationPct >= 75 ? 'Kapasitas gudang perlu dipantau ketat.' : 'Kapasitas gudang masih relatif aman.'}</p>
+                        <p>• ${delta < 0 ? 'Sinkronkan production/replenishment dengan laju delivery.' : 'Pertahankan produksi sesuai demand untuk menghindari overstock.'}</p>
+                        <p>• Prioritaskan review SKU dengan kontribusi stok terbesar dan SKU dengan outflow tinggi pada grafik.</p>
+                    </div>
+                </div>`;
             document.getElementById('aiResult').innerHTML=html;
         }
-        async function runAIStockAnalysis() {
+
+        function renderAICharts() {
+            const d = buildAIAnalyticsData();
+
+            const trendCanvas = document.getElementById('aiTrendChart');
+            if (trendCanvas) {
+                if (aiTrendChartInstance) aiTrendChartInstance.destroy();
+                aiTrendChartInstance = new Chart(trendCanvas.getContext('2d'), {
+                    type:'line',
+                    data:{
+                        labels:d.dailyTrend.map(x=>String(x.day)),
+                        datasets:[
+                            {label:'IN (ZAK)',data:d.dailyTrend.map(x=>x.inZak),borderColor:'#00E5FF',backgroundColor:'rgba(0,229,255,.08)',tension:.35,fill:true,borderWidth:2},
+                            {label:'OUT (ZAK)',data:d.dailyTrend.map(x=>x.outZak),borderColor:'#FF4D6D',backgroundColor:'rgba(255,77,109,.08)',tension:.35,fill:true,borderWidth:2}
+                        ]
+                    },
+                    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#B8C0D9',font:{size:9}}}},scales:{x:{ticks:{color:'#B8C0D9',font:{size:8}}},y:{ticks:{color:'#B8C0D9',font:{size:8}}}}}
+                });
+            }
+
+            const topCanvas = document.getElementById('aiTopSkuChart');
+            if (topCanvas) {
+                if (aiTopSkuChartInstance) aiTopSkuChartInstance.destroy();
+                const top = d.topStockSku.slice(0,10).reverse();
+                aiTopSkuChartInstance = new Chart(topCanvas.getContext('2d'), {
+                    type:'bar',
+                    data:{labels:top.map(x=>x.sku),datasets:[{label:'Stock (Ton)',data:top.map(x=>x.qtyTon),backgroundColor:'rgba(109,93,246,.75)',borderColor:'#6D5DF6',borderWidth:1}]},
+                    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#B8C0D9',font:{size:8}}},y:{ticks:{color:'#B8C0D9',font:{size:8}}}}}
+                });
+            }
+
+            const segCanvas = document.getElementById('aiSegmentChart');
+            if (segCanvas) {
+                if (aiSegmentChartInstance) aiSegmentChartInstance.destroy();
+                const entries = Object.entries(d.segmentTon);
+                aiSegmentChartInstance = new Chart(segCanvas.getContext('2d'), {
+                    type:'doughnut',
+                    data:{labels:entries.map(x=>x[0]),datasets:[{data:entries.map(x=>x[1]),backgroundColor:['#00E5FF','#6D5DF6','#00D084','#FFB800'],borderColor:'#070B14',borderWidth:3}]},
+                    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#B8C0D9',font:{size:9},usePointStyle:true}}}}
+                });
+            }
+        }
+
+        function updateAIVisuals() {
             updateAISnapshot();
+            renderAICharts();
+        }
+
+        async function runAIStockAnalysis() {
+            updateAIVisuals();
             const btn=document.getElementById('aiAnalyzeBtn'), status=document.getElementById('aiStatusText'), result=document.getElementById('aiResult');
             const endpoint=(localStorage.getItem('LMS_AI_PROXY_ENDPOINT')||AI_PROXY_ENDPOINT||'').trim();
             const payload=buildAIDataPayload();
-            if(!endpoint || endpoint.includes('YOUR-WORKER-NAME')){ renderLocalAI(); status.innerText='Worker AI belum dikonfigurasi. Buka Gemini Settings dan masukkan URL /analyze Cloudflare Worker.'; return; }
-            btn.disabled=true; btn.innerHTML='<i class="ph-bold ph-spinner-gap animate-spin"></i> Analyzing...'; status.innerText='Mengirim ringkasan data ke AI Analyst...';
-            const prompt=`Anda adalah Supply Chain / Warehouse Executive Analyst untuk perusahaan mortar. Analisis data berikut secara objektif. Jangan mengarang angka. Gunakan bahasa Indonesia profesional dan ringkas. Output wajib dengan bagian: EXECUTIVE SUMMARY, KEY FINDINGS (maks 5), RISK ALERT (maks 3), RECOMMENDED ACTION (maks 5). Fokus pada stock balance, production vs delivery bila tersedia, utilisasi gudang, SKU dominan, dan potensi stock-out/overstock. Data JSON:\n${JSON.stringify(payload)}`;
+
+            if(!endpoint || endpoint.includes('YOUR-WORKER-NAME')){
+                renderLocalAI();
+                status.innerText='Worker AI belum dikonfigurasi. Buka Gemini Settings dan masukkan URL /analyze Cloudflare Worker.';
+                return;
+            }
+
+            btn.disabled=true;
+            btn.innerHTML='<i class="ph-bold ph-spinner-gap animate-spin"></i> Analyzing...';
+            status.innerText='Mengirim data MTD, SKU, segment, dan trend transaksi ke AI Analyst...';
+
+            const prompt = `Anda adalah Senior Supply Chain & Warehouse Executive Analyst untuk perusahaan mortar.
+Analisis DATA DASHBOARD JSON secara mendalam, objektif, dan berbasis angka. Jangan mengarang angka dan jangan menambahkan asumsi seolah-olah fakta.
+Gunakan bahasa Indonesia profesional yang cocok untuk Management/Executive.
+
+OUTPUT WAJIB 7 BAGIAN:
+1. EXECUTIVE SUMMARY — 1 paragraf, jelaskan kondisi stok saat ini dan implikasinya.
+2. PERFORMANCE — jelaskan IN vs OUT, net movement, trend harian, peak IN/OUT, dan utilisasi gudang.
+3. SKU ANALYSIS — soroti SKU terbesar, konsentrasi stok, SKU dengan outflow tinggi, serta potensi slow/fast moving bila data mendukung.
+4. SEGMENT ANALYSIS — Retail/Project/General dan kontribusinya.
+5. RISK ALERT — 3-5 risiko dengan alasan numerik.
+6. ROOT CAUSE / INTERPRETATION — jelaskan kemungkinan penyebab berdasarkan pola data, namun beri label jelas bila berupa interpretasi.
+7. RECOMMENDED ACTION — 5 tindakan prioritas yang konkret, operasional, dan bisa ditindaklanjuti.
+
+Tambahkan juga satu baris "MANAGEMENT TAKEAWAY" yang merangkum keputusan utama.
+Jangan mengulang semua angka; pilih angka yang paling material.
+Data periode MTD adalah snapshot sampai hari ini.
+DATA:
+${JSON.stringify(payload)}`;
+
             try{
-                const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:GEMINI_MODEL,prompt,data:payload})});
+                const res=await fetch(endpoint,{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({model:GEMINI_MODEL,prompt,data:payload})
+                });
                 const data=await res.json();
                 if(!res.ok) throw new Error(data?.error||data?.message||`HTTP ${res.status}`);
                 const text=(data.text||'').trim();
                 if(!text) throw new Error('AI tidak mengembalikan teks.');
-                result.innerHTML=`<div class="rounded-xl border border-accentPurple/20 bg-accentPurple/5 p-4 md:p-5"><div class="flex items-center gap-2 mb-4"><i class="ph-fill ph-sparkle text-accentPurple"></i><h4 class="text-white font-black text-sm">Gemini Executive Insight</h4><span class="ml-auto text-[8px] px-2 py-1 rounded bg-statusSuccess/10 text-statusSuccess border border-statusSuccess/20">AI PROXY</span></div><div class="text-[11px] text-textSecondary leading-relaxed">${renderAIText(text)}</div></div>`;
-                status.innerText='Analisis AI selesai.'; showToast('AI Analysis','Analisis berhasil dibuat.','success');
-            }catch(err){ console.error(err); renderLocalAI(); status.innerText=`AI Proxy gagal digunakan: ${err.message}. Insight lokal ditampilkan sebagai fallback.`; showToast('AI Error','Fallback ke Local Insight.','warning'); }
-            finally{ btn.disabled=false; btn.innerHTML='<i class="ph-bold ph-sparkle"></i> Analyze'; }
+
+                result.innerHTML=`
+                    <div class="rounded-xl border border-accentPurple/20 bg-accentPurple/5 p-4 md:p-5">
+                        <div class="flex items-center gap-2 mb-4"><i class="ph-fill ph-sparkle text-accentPurple"></i><h4 class="text-white font-black text-sm">AI Executive Insight V2</h4><span class="ml-auto text-[8px] px-2 py-1 rounded bg-statusSuccess/10 text-statusSuccess border border-statusSuccess/20">GEMINI</span></div>
+                        <div class="text-[11px] text-textSecondary leading-relaxed">${renderAIText(text)}</div>
+                    </div>`;
+                status.innerText='Analisis AI selesai. Visual dan insight sudah diperbarui.';
+                showToast('AI Analysis','Analisis detail berhasil dibuat.','success');
+            }catch(err){
+                console.error(err);
+                renderLocalAI();
+                status.innerText=`AI Proxy gagal digunakan: ${err.message}. Visual dashboard tetap tersedia dan Local Insight ditampilkan.`;
+                showToast('AI Error','Fallback ke Local Insight.','warning');
+            }finally{
+                btn.disabled=false;
+                btn.innerHTML='<i class="ph-bold ph-sparkle"></i> Analyze';
+            }
         }
 
         function handleTabClick(tabName) {
@@ -2822,6 +3069,10 @@
             }
             if(tabName === 'stock') {
                 setTimeout(renderCharts, 10);
+            }
+            if(tabName === 'ai-analyst') {
+                setTimeout(updateAIVisuals, 50);
+                updateAIConnectionStatus();
             }
             if(tabName === 'ai-analyst') {
                 setTimeout(updateAISnapshot, 10);
