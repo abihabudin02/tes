@@ -939,7 +939,10 @@
                                 <h4 class="text-[10px] md:text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
                                     <i class="ph-fill ph-chart-line-down text-statusDanger text-base"></i> Tren Pengurangan Balance Stok
                                 </h4>
-                                <span class="text-[9px] md:text-[10px] bg-bgPrimary px-2 py-1 rounded text-textSecondary border border-borderMain">Opening Stok - Rilis MD (Kolom R)</span>
+                                <div class="flex flex-col items-end gap-1">
+                                    <span class="text-[9px] md:text-[10px] bg-bgPrimary px-2 py-1 rounded text-textSecondary border border-borderMain">Opening Stok - Rilis MD</span>
+                                    <span class="chart-data-status text-[8px] md:text-[9px] text-textSecondary font-mono">Menunggu data...</span>
+                                </div>
                             </div>
                             <div class="w-full h-[250px] md:h-[300px] relative">
                                 <canvas id="stockDepletionChart"></canvas>
@@ -1060,10 +1063,9 @@
                             <thead class="sticky top-0 bg-[#14213d] z-10 border-b border-borderMain shadow-sm">
                                 <tr class="text-[9px] md:text-[11px] font-bold text-textSecondary uppercase tracking-wider">
                                     <th class="px-3 md:px-6 py-3 md:py-4">Tanggal Posting</th>
-                                    <th class="px-3 md:px-6 py-3 md:py-4">SKU</th>
+                                    <th class="px-3 md:px-6 py-3 md:py-4">SEGMENT</th>
                                     <th class="px-3 md:px-6 py-3 md:py-4">Jenis Transaksi</th>
-                                    <th class="px-3 md:px-6 py-3 md:py-4">Segment</th>
-                                    <th class="px-3 md:px-6 py-3 md:py-4">Project / Delivery Note</th>
+                                    <th class="px-3 md:px-6 py-3 md:py-4">SKU/ Produk</th>
                                     <th class="px-3 md:px-6 py-3 md:py-4 text-right">Total Qty (ZAK)</th>
                                     <th class="px-3 md:px-6 py-3 md:py-4 text-right">Total Qty (TON)</th>
                                 </tr>
@@ -2113,76 +2115,122 @@
         }
 
         function renderStokDepletionChart() {
-            if (!stokSigDetailRaw.rows || stokSigDetailRaw.rows.length === 0) return;
+            const canvas = document.getElementById('stockDepletionChart');
+            if (!canvas) return;
 
-            // Date is in column R (Index 17). Qty Ton (example) in column I (Index 8) or find by header
-            const rilisHeaders = stokSigDetailRaw.headers || [];
-            const dateColIdx = 17; // Kolom R
-            let tonColIdx = rilisHeaders.findIndex(h => h.toLowerCase().includes('ton'));
-            if(tonColIdx === -1) tonColIdx = 8; // Fallback to column I
-
-            // Aggregate Rilis MD Ton by Date
-            const dateMap = {};
-            stokSigDetailRaw.rows.forEach(r => {
-                const rawDate = r[dateColIdx];
-                const tonVal = cleanNum(r[tonColIdx]);
-                if (rawDate && tonVal > 0) {
-                    const dateStr = rawDate.toString().trim();
-                    // Simple parsing, assuming format might vary, just use string as key for simplicity
-                    // Or attempt to parse to standard format if needed
-                    let parsedDate = new Date(dateStr);
-                    let key = dateStr;
-                    if (!isNaN(parsedDate.getTime())) {
-                        key = parsedDate.toISOString().split('T')[0];
-                    }
-                    if(!dateMap[key]) dateMap[key] = { dateObj: parsedDate, tonOut: 0 };
-                    dateMap[key].tonOut += tonVal;
-                }
-            });
-
-            // Sort dates
-            const sortedDates = Object.keys(dateMap).sort((a, b) => {
-                const dA = dateMap[a].dateObj;
-                const dB = dateMap[b].dateObj;
-                if(!isNaN(dA) && !isNaN(dB)) return dA - dB;
-                return a.localeCompare(b);
-            });
-
-            const labels = [];
-            const dataStock = [];
-            let currentStock = initialOpeningStock;
-
-            // Generate depletion data
-            if(sortedDates.length > 0) {
-                 // Add point 0 for initial stock
-                 labels.push('Awal');
-                 dataStock.push(currentStock);
-                 
-                 sortedDates.forEach(dateKey => {
-                     currentStock -= dateMap[dateKey].tonOut;
-                     if(currentStock < 0) currentStock = 0; // Prevent negative stock for display
-                     labels.push(dateKey);
-                     dataStock.push(currentStock);
-                 });
-            } else {
-                 labels.push('Data Kosong');
-                 dataStock.push(initialOpeningStock);
+            // Always destroy the previous instance before rebuilding.
+            if (stockDepletionChartInstance) {
+                stockDepletionChartInstance.destroy();
+                stockDepletionChartInstance = null;
             }
 
-            const ctx = document.getElementById('stockDepletionChart');
-            if(ctx) {
-                if(stockDepletionChartInstance) stockDepletionChartInstance.destroy();
-                
-                const ctx2d = ctx.getContext('2d');
-                let gradient = ctx2d.createLinearGradient(0, 0, 0, 300);
-                gradient.addColorStop(0, 'rgba(255, 77, 109, 0.4)');
-                gradient.addColorStop(1, 'rgba(255, 77, 109, 0.0)');
+            const headers = stokSigDetailRaw.headers || [];
+            const rows = stokSigDetailRaw.rows || [];
 
-                stockDepletionChartInstance = new Chart(ctx2d, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
+            // Helper: detect columns by header first, then use the original R/I fallback.
+            const normalizedHeaders = headers.map(h => (h || '').toString().trim().toLowerCase());
+            const findHeader = (patterns) => normalizedHeaders.findIndex(h => patterns.some(p => h.includes(p)));
+
+            let dateColIdx = findHeader(['tanggal terbit', 'tanggal rilis', 'tanggal', 'tgl', 'date']);
+            if (dateColIdx === -1 || dateColIdx >= 36) dateColIdx = 17; // Original: column R
+
+            let tonColIdx = findHeader(['qty ton', 'qty (ton)', 'tonase', 'quantity ton', 'qty_ton', 'ton']);
+            if (tonColIdx === -1 || tonColIdx >= 36) tonColIdx = 8; // Original fallback: column I
+
+            // Parse Indonesian/common date formats safely.
+            const parseFlexibleDate = (value) => {
+                if (value === null || value === undefined) return null;
+                const raw = value.toString().trim();
+                if (!raw) return null;
+
+                // Excel serial date
+                if (/^\d+(\.\d+)?$/.test(raw)) {
+                    const n = Number(raw);
+                    if (n > 20000 && n < 60000) {
+                        const d = new Date(Date.UTC(1899, 11, 30) + n * 86400000);
+                        return isNaN(d.getTime()) ? null : d;
+                    }
+                }
+
+                // dd/mm/yyyy or dd-mm-yyyy (also accepts timestamps after the date)
+                let m = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+                if (m) {
+                    const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+                    return isNaN(d.getTime()) ? null : d;
+                }
+
+                // yyyy-mm-dd
+                m = raw.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+                if (m) {
+                    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+                    return isNaN(d.getTime()) ? null : d;
+                }
+
+                const d = new Date(raw);
+                return isNaN(d.getTime()) ? null : d;
+            };
+
+            const dateKey = d => {
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            };
+
+            const displayDate = d => d.toLocaleDateString('id-ID', {
+                day: '2-digit', month: 'short', year: '2-digit'
+            });
+
+            // Aggregate Rilis MD (Ton) by date.
+            const dateMap = {};
+            let validDateRows = 0;
+            let totalReleaseTon = 0;
+
+            rows.forEach(r => {
+                const d = parseFlexibleDate(r[dateColIdx]);
+                const tonVal = cleanNum(r[tonColIdx]);
+                if (!d || tonVal <= 0) return;
+
+                validDateRows++;
+                const key = dateKey(d);
+                if (!dateMap[key]) dateMap[key] = { dateObj: d, tonOut: 0 };
+                dateMap[key].tonOut += tonVal;
+                totalReleaseTon += tonVal;
+            });
+
+            const sortedKeys = Object.keys(dateMap).sort((a, b) => a.localeCompare(b));
+            const labels = ['Opening'];
+            const dataStock = [Math.max(0, cleanNum(initialOpeningStock))];
+            const releaseData = [0];
+
+            let currentStock = Math.max(0, cleanNum(initialOpeningStock));
+
+            sortedKeys.forEach(key => {
+                const item = dateMap[key];
+                currentStock = Math.max(0, currentStock - item.tonOut);
+                labels.push(displayDate(item.dateObj));
+                dataStock.push(currentStock);
+                releaseData.push(item.tonOut);
+            });
+
+            // If no usable transaction rows exist, still render a visible chart instead of blank.
+            if (sortedKeys.length === 0) {
+                labels.push('Belum ada Rilis MD');
+                dataStock.push(dataStock[0]);
+                releaseData.push(0);
+            }
+
+            const ctx2d = canvas.getContext('2d');
+            const gradient = ctx2d.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(255, 77, 109, 0.35)');
+            gradient.addColorStop(1, 'rgba(255, 77, 109, 0.0)');
+
+            stockDepletionChartInstance = new Chart(ctx2d, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
                             label: 'Balance Stock (Ton)',
                             data: dataStock,
                             borderColor: '#FF4D6D',
@@ -2194,41 +2242,72 @@
                             pointBorderColor: '#FF4D6D',
                             pointBorderWidth: 2,
                             pointRadius: 4,
-                            pointHoverRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: 'rgba(17, 28, 51, 0.95)',
-                                titleColor: '#FFFFFF',
-                                bodyColor: '#FF4D6D',
-                                borderColor: 'rgba(255, 77, 109, 0.3)',
-                                borderWidth: 1,
-                                callbacks: {
-                                    label: function(context) {
-                                        return 'Sisa Stok: ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(context.parsed.y) + ' Ton';
-                                    }
+                            pointHoverRadius: 6,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Rilis MD Harian (Ton)',
+                            data: releaseData,
+                            borderColor: '#00E5FF',
+                            backgroundColor: 'rgba(0,229,255,0.15)',
+                            borderWidth: 2,
+                            tension: 0.25,
+                            fill: false,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { color: '#B8C0D9', font: { size: 9 }, usePointStyle: true }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 28, 51, 0.95)',
+                            titleColor: '#FFFFFF',
+                            bodyColor: '#FFFFFF',
+                            borderColor: 'rgba(255,255,255,0.12)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${new Intl.NumberFormat('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(context.parsed.y || 0)} Ton`;
                                 }
                             }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#B8C0D9', font: { size: 9 }, maxRotation: 45, minRotation: 0 }
                         },
-                        scales: {
-                            x: { 
-                                grid: { color: 'rgba(255,255,255,0.05)' },
-                                ticks: { color: '#B8C0D9', font: {size: 9} }
-                            },
-                            y: { 
-                                beginAtZero: true,
-                                grid: { color: 'rgba(255,255,255,0.05)', borderDash: [5, 5] },
-                                ticks: { color: '#FF4D6D', font: {size: 10} },
-                                title: { display: true, text: 'Tonase', color: '#B8C0D9', font: {size: 10} }
-                            }
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.05)', borderDash: [5, 5] },
+                            ticks: { color: '#FF4D6D', font: { size: 10 } },
+                            title: { display: true, text: 'Balance (Ton)', color: '#FF4D6D', font: { size: 10 } }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: '#00E5FF', font: { size: 10 } },
+                            title: { display: true, text: 'Rilis Harian (Ton)', color: '#00E5FF', font: { size: 10 } }
                         }
                     }
-                });
+                }
+            });
+
+            // Update the small description so the user can immediately see the data status.
+            const chartCard = canvas.closest('.bg-bgCard');
+            const status = chartCard ? chartCard.querySelector('.chart-data-status') : null;
+            if (status) {
+                status.textContent = `Opening: ${fmtDec(initialOpeningStock)} Ton • Rilis terbaca: ${fmtDec(totalReleaseTon)} Ton • ${validDateRows} transaksi valid`;
             }
         }
 
@@ -2842,24 +2921,24 @@
 
             const filteredRecords = filterTransactionByDate(transactionRecords, 'transStartSum', 'transEndSum');
             if (!filteredRecords || filteredRecords.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="px-3 md:px-6 py-6 md:py-12 text-center text-textSecondary italic text-[10px] md:text-xs">Tidak ada transaksi pada rentang tanggal ini.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="px-3 md:px-6 py-6 md:py-12 text-center text-textSecondary italic text-[10px] md:text-xs">Tidak ada transaksi pada rentang tanggal ini.</td></tr>`;
                 return;
             }
 
             const agg = {};
             filteredRecords.forEach(d => {
                 const dateFormatted = !isNaN(d.dateObj) ? d.dateObj.toLocaleDateString('en-GB') : d.rawDate;
-                const key = `${dateFormatted}|${d.produk}|${d.type}|${d.segment}|${d.projectDelivery}`;
-                if(!agg[key]) {
-                    agg[key] = { 
-                        dateFormatted: dateFormatted, 
+                // Tampilan mengikuti header yang diminta: Tanggal | SEGMENT | Jenis Transaksi | SKU/ Produk | Qty ZAK | Qty TON
+                const key = `${dateFormatted}|${d.produk}|${d.type}|${d.projectDelivery}`;
+                if (!agg[key]) {
+                    agg[key] = {
+                        dateFormatted,
                         dateObj: d.dateObj,
-                        produk: d.produk, 
-                        type: d.type, 
-                        segment: d.segment, 
-                        projectDelivery: d.projectDelivery, 
-                        zak: 0, 
-                        ton: 0 
+                        segment: d.produk,
+                        type: d.type,
+                        skuProduk: d.projectDelivery,
+                        zak: 0,
+                        ton: 0
                     };
                 }
                 agg[key].zak += d.zak;
@@ -2868,24 +2947,22 @@
 
             const sortedAgg = Object.values(agg).sort((a, b) => {
                 if (!isNaN(a.dateObj) && !isNaN(b.dateObj) && a.dateObj.getTime() !== b.dateObj.getTime()) return a.dateObj - b.dateObj;
-                if (a.produk !== b.produk) return a.produk.localeCompare(b.produk);
+                if (a.segment !== b.segment) return a.segment.localeCompare(b.segment);
                 if (a.type !== b.type) return a.type.localeCompare(b.type);
-                return a.segment.localeCompare(b.segment);
+                return a.skuProduk.localeCompare(b.skuProduk);
             });
 
             let html = '';
             sortedAgg.forEach(item => {
                 html += `<tr class="table-row-hover border-b border-borderMain/30 text-textSecondary transition-colors">
                     <td class="px-3 md:px-6 py-2 md:py-3 font-mono text-[10px] md:text-xs text-accentCyan">${item.dateFormatted}</td>
-                    <td class="px-3 md:px-6 py-2 md:py-3 font-bold text-white font-mono text-[10px] md:text-xs">${item.produk}</td>
+                    <td class="px-3 md:px-6 py-2 md:py-3 font-bold text-white font-mono text-[10px] md:text-xs">${item.segment}</td>
                     <td class="px-3 md:px-6 py-2 md:py-3 font-semibold text-white text-[10px] md:text-xs">${item.type}</td>
-                    <td class="px-3 md:px-6 py-2 md:py-3 font-medium text-white text-[10px] md:text-xs">${item.segment}</td>
-                    <td class="px-3 md:px-6 py-2 md:py-3 font-mono text-[10px] md:text-xs text-textSecondary">${item.projectDelivery}</td>
+                    <td class="px-3 md:px-6 py-2 md:py-3 font-mono text-[10px] md:text-xs text-textSecondary">${item.skuProduk}</td>
                     <td class="px-3 md:px-6 py-2 md:py-3 text-right font-mono text-[10px] md:text-xs font-bold text-accentCyan">${fmtNum(item.zak)}</td>
                     <td class="px-3 md:px-6 py-2 md:py-3 text-right font-mono text-[10px] md:text-xs font-bold text-accentPurple">${fmtDec(item.ton)}</td>
                 </tr>`;
             });
-
             tbody.innerHTML = html;
         }
 
@@ -3688,9 +3765,12 @@ ${JSON.stringify(payload)}`;
 
         function exportTransSummary() {
             showToast('Preparing Report...', 'Generating Transaction Summary Excel (Template Style)...', 'info');
+            // Sinkronkan preview dan export dengan dataset transaksi terbaru yang sudah dimuat.
+            renderTransSummary();
             const startStr = document.getElementById('transStartSum').value;
             const endStr = document.getElementById('transEndSum').value;
-            const filteredRecords = filterTransactionByDate(transactionRecords, 'transStartSum', 'transEndSum');
+            const latestRecords = Array.isArray(transactionRecords) ? transactionRecords.slice() : [];
+            const filteredRecords = filterTransactionByDate(latestRecords, 'transStartSum', 'transEndSum');
 
             if (!filteredRecords || filteredRecords.length === 0) {
                 showToast('Warning', 'Tidak ada data transaksi untuk diexport pada rentang ini.', 'error');
@@ -3700,15 +3780,14 @@ ${JSON.stringify(payload)}`;
             const agg = {};
             filteredRecords.forEach(d => {
                 const dateFormatted = !isNaN(d.dateObj) ? d.dateObj.toLocaleDateString('en-GB') : d.rawDate;
-                const key = `${dateFormatted}|${d.produk}|${d.type}|${d.segment}|${d.projectDelivery}`;
+                const key = `${dateFormatted}|${d.produk}|${d.type}|${d.projectDelivery}`;
                 if(!agg[key]) {
                     agg[key] = { 
                         dateFormatted: dateFormatted, 
                         dateObj: d.dateObj,
                         produk: d.produk, 
                         type: d.type, 
-                        segment: d.segment, 
-                        projectDelivery: d.projectDelivery, 
+                        skuProduk: d.projectDelivery, 
                         zak: 0, 
                         ton: 0 
                     };
@@ -3721,7 +3800,7 @@ ${JSON.stringify(payload)}`;
                 if (!isNaN(a.dateObj) && !isNaN(b.dateObj) && a.dateObj.getTime() !== b.dateObj.getTime()) return a.dateObj - b.dateObj;
                 if (a.produk !== b.produk) return a.produk.localeCompare(b.produk);
                 if (a.type !== b.type) return a.type.localeCompare(b.type);
-                return a.segment.localeCompare(b.segment);
+                return a.skuProduk.localeCompare(b.skuProduk);
             });
 
             const wb = XLSX.utils.book_new(), ws = {};
@@ -3757,7 +3836,7 @@ ${JSON.stringify(payload)}`;
                 { s: {r:2, c:0}, e: {r:2, c:6} }
             ];
             
-            const headers = ["Tanggal Posting", "SKU", "Jenis Transaksi", "Segment", "Project / Delivery Note", "Total Qty (ZAK)", "Total Qty (TON)"];
+            const headers = ["Tanggal Posting", "SEGMENT", "Jenis Transaksi", "SKU/ Produk", "Total Qty (ZAK)", "Total Qty (TON)"];
             headers.forEach((h, i) => setCell(4, i, h, styleHeader));
 
             let currentRow = 5;
@@ -3767,10 +3846,9 @@ ${JSON.stringify(payload)}`;
                 setCell(currentRow, 0, item.dateFormatted, styleDataLeft);
                 setCell(currentRow, 1, item.produk, styleDataLeft);
                 setCell(currentRow, 2, item.type, styleDataLeft);
-                setCell(currentRow, 3, item.segment, styleDataLeft);
-                setCell(currentRow, 4, item.projectDelivery, styleDataLeft);
-                setCell(currentRow, 5, item.zak, styleDataRight, 'n', '#,##0');
-                setCell(currentRow, 6, item.ton, styleDataRight, 'n', '#,##0.0');
+                setCell(currentRow, 3, item.skuProduk, styleDataLeft);
+                setCell(currentRow, 4, item.zak, styleDataRight, 'n', '#,##0');
+                setCell(currentRow, 5, item.ton, styleDataRight, 'n', '#,##0.0');
                 grandTotalZak += item.zak;
                 grandTotalTon += item.ton;
                 currentRow++;
