@@ -224,6 +224,15 @@
             from { transform: translateX(0); }
             to { transform: translateX(-50%); }
         }
+
+        /* AI Executive Voice Presentation V16 */
+        .ai-presentation-target{transition:transform .55s cubic-bezier(.2,.8,.2,1),box-shadow .55s ease,opacity .55s ease,filter .55s ease;transform-origin:center;}
+        .ai-presentation-target.ai-present-active{transform:scale(1.018);box-shadow:0 0 0 1px rgba(0,229,255,.35),0 0 42px rgba(0,229,255,.14);filter:none;position:relative;z-index:8;}
+        .ai-presentation-target.ai-present-active::after{content:"AI NOW EXPLAINING";position:absolute;top:12px;right:12px;font-size:8px;font-weight:900;letter-spacing:.12em;color:#00E5FF;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);padding:5px 8px;border-radius:999px;pointer-events:none;animation:aiPresentPulse 1.4s ease-in-out infinite;}
+        #aiPresentationBar.ai-speaking #aiVoiceOrb{animation:aiVoicePulse .75s ease-in-out infinite alternate;}
+        .ai-present-dim{opacity:.42;filter:saturate(.55);}
+        @keyframes aiVoicePulse{from{transform:scale(.92);box-shadow:0 0 0 0 rgba(0,229,255,0)}to{transform:scale(1.08);box-shadow:0 0 0 10px rgba(0,229,255,0)}}
+        @keyframes aiPresentPulse{0%,100%{opacity:.65}50%{opacity:1}}
 </style>
 </head>
 <body class="flex h-screen w-full overflow-hidden bg-bgPrimary">
@@ -715,22 +724,39 @@
                             <div class="flex gap-2 w-full xl:w-auto">
                                 <button onclick="openGeminiSettings()" class="flex-1 xl:flex-none justify-center px-3 py-2 bg-bgPrimary border border-borderMain rounded-xl text-textSecondary hover:text-white text-[10px] font-semibold flex items-center gap-2"><i class="ph-bold ph-gear"></i> Worker Settings</button>
                                 <button type="button" onclick="runAIStockAnalysis(event)" id="aiAnalyzeBtn" class="flex-1 xl:flex-none justify-center px-5 py-2 bg-gradient-to-r from-accentPurple to-pink-500 text-white font-bold rounded-xl shadow-glow-purple text-[10px] flex items-center gap-2"><i class="ph-bold ph-sparkle"></i> Analyze</button>
+                                <button type="button" onclick="startAIPresentation()" id="aiPresentBtn" class="flex-1 xl:flex-none justify-center px-4 py-2 bg-bgPrimary border border-accentCyan/30 text-accentCyan hover:bg-accentCyan/10 rounded-xl text-[10px] font-bold flex items-center gap-2"><i class="ph-bold ph-play"></i> Present AI</button>
                             </div>
                         </div>
 
                         <div class="p-4 md:p-6 space-y-6">
+                            <div id="aiPresentationBar" class="hidden rounded-2xl border border-accentCyan/20 bg-bgPrimary/80 p-4 shadow-glow-cyan sticky top-2 z-30">
+                                <div class="flex flex-col md:flex-row md:items-center gap-3">
+                                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                                        <span id="aiVoiceOrb" class="w-9 h-9 rounded-full bg-accentCyan/15 border border-accentCyan/30 flex items-center justify-center text-accentCyan"><i class="ph-fill ph-waveform"></i></span>
+                                        <div class="min-w-0"><p class="text-[9px] text-accentCyan font-black uppercase tracking-widest">AI Executive Presentation</p><p id="aiPresentationScene" class="text-xs text-white font-bold truncate">Siap mempresentasikan analisis...</p></div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" onclick="pauseAIPresentation()" class="px-3 py-2 rounded-lg bg-bgCard border border-borderMain text-textSecondary hover:text-white text-[10px] font-bold"><i class="ph-bold ph-pause"></i> Pause</button>
+                                        <button type="button" onclick="resumeAIPresentation()" class="px-3 py-2 rounded-lg bg-bgCard border border-borderMain text-textSecondary hover:text-white text-[10px] font-bold"><i class="ph-bold ph-play"></i> Resume</button>
+                                        <button type="button" onclick="stopAIPresentation()" class="px-3 py-2 rounded-lg bg-statusDanger/10 border border-statusDanger/20 text-statusDanger text-[10px] font-bold"><i class="ph-bold ph-stop"></i> Stop</button>
+                                    </div>
+                                </div>
+                                <div class="mt-3 h-1.5 bg-bgCard rounded-full overflow-hidden"><div id="aiPresentationProgress" class="h-full bg-gradient-to-r from-accentCyan to-accentPurple rounded-full transition-all duration-500" style="width:0%"></div></div>
+                                <div class="mt-2 flex justify-between text-[9px] text-textSecondary"><span id="aiPresentationTime">00:00</span><span id="aiPresentationStep">0 / 9</span></div>
+                            </div>
+
                             <div id="aiStatusBox" class="rounded-xl border border-accentPurple/20 bg-accentPurple/5 p-4">
                                 <div class="flex items-start gap-3"><i class="ph-fill ph-info text-accentPurple text-xl mt-0.5"></i><div><p class="text-white text-xs font-bold">AI Analysis Ready</p><p id="aiStatusText" class="text-[10px] text-textSecondary mt-1">Klik Analyze untuk menganalisis seluruh dataset MTD dan menghasilkan insight eksekutif.</p></div></div>
                             </div>
 
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                            <div id="aiKpiFocus" class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                                 <div class="ai-kpi-card"><span>FG Stock</span><strong id="aiSnapTon">0 Ton</strong><small>Current balance</small></div>
                                 <div class="ai-kpi-card"><span>SKU Aktif</span><strong id="aiSnapSku">0</strong><small>Active SKU</small></div>
                                 <div class="ai-kpi-card ai-kpi-success"><span>IN Bulan Ini</span><strong id="aiSnapIn">0</strong><small>Inbound</small></div>
                                 <div class="ai-kpi-card ai-kpi-danger"><span>OUT Bulan Ini</span><strong id="aiSnapOut">0</strong><small>Outbound</small></div>
                             </div>
 
-                            <section class="ai-chart-section">
+                            <section id="aiSceneTrend" class="ai-chart-section ai-presentation-target">
                                 <div class="ai-section-header">
                                     <div><h4><i class="ph-fill ph-chart-line-up"></i> 1. Trend IN vs OUT</h4><p>Pergerakan inbound dan outbound harian MTD.</p></div>
                                     <span class="ai-badge">TREND</span>
@@ -739,7 +765,7 @@
                                 <div id="aiTrendInsight" class="ai-chart-insight"></div>
                             </section>
 
-                            <section class="ai-chart-section">
+                            <section id="aiSceneNet" class="ai-chart-section ai-presentation-target">
                                 <div class="ai-section-header">
                                     <div><h4><i class="ph-fill ph-chart-bar"></i> 2. Daily Net Movement</h4><p>Selisih IN - OUT untuk melihat hari akumulasi dan deplesi stok.</p></div>
                                     <span class="ai-badge">NET FLOW</span>
@@ -748,7 +774,7 @@
                                 <div id="aiNetMovementInsight" class="ai-chart-insight"></div>
                             </section>
 
-                            <section class="ai-chart-section">
+                            <section id="aiSceneTopSku" class="ai-chart-section ai-presentation-target">
                                 <div class="ai-section-header">
                                     <div><h4><i class="ph-fill ph-ranking"></i> 3. Top 10 SKU berdasarkan Stock</h4><p>Konsentrasi stok terbesar pada Finished Goods.</p></div>
                                     <span class="ai-badge">TOP SKU</span>
@@ -757,7 +783,7 @@
                                 <div id="aiTopSkuInsight" class="ai-chart-insight"></div>
                             </section>
 
-                            <section class="ai-chart-section">
+                            <section id="aiSceneOutflow" class="ai-chart-section ai-presentation-target">
                                 <div class="ai-section-header">
                                     <div><h4><i class="ph-fill ph-trend-up"></i> 4. Top SKU berdasarkan OUTFLOW</h4><p>SKU dengan pergerakan keluar paling besar pada periode MTD.</p></div>
                                     <span class="ai-badge">OUTFLOW</span>
@@ -766,7 +792,7 @@
                                 <div id="aiOutflowInsight" class="ai-chart-insight"></div>
                             </section>
 
-                            <section class="ai-chart-section">
+                            <section id="aiSceneSegment" class="ai-chart-section ai-presentation-target">
                                 <div class="ai-section-header">
                                     <div><h4><i class="ph-fill ph-chart-donut"></i> 5. Segment Mix</h4><p>Komposisi stock berdasarkan RETAIL, PROJECT, GENERAL dan segment lain yang tersedia.</p></div>
                                     <span class="ai-badge">SEGMENT</span>
@@ -775,7 +801,7 @@
                                 <div id="aiSegmentInsight" class="ai-chart-insight"></div>
                             </section>
 
-                            <section class="ai-chart-section">
+                            <section id="aiSceneRisk" class="ai-chart-section ai-presentation-target">
                                 <div class="ai-section-header">
                                     <div><h4><i class="ph-fill ph-warning"></i> 6. Risk & Capacity Check</h4><p>Deteksi tekanan kapasitas, ketidakseimbangan flow, konsentrasi stok dan SKU prioritas.</p></div>
                                     <span class="ai-badge ai-badge-warn">RISK</span>
@@ -783,7 +809,7 @@
                                 <div id="aiLocalRisk" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 text-[10px] text-textSecondary"></div>
                             </section>
 
-                            <section id="aiFinalAnalysisSection" class="ai-final-analysis">
+                            <section id="aiFinalAnalysisSection" class="ai-final-analysis ai-presentation-target">
                                 <div class="ai-final-header">
                                     <div><h4><i class="ph-fill ph-brain"></i> 7. Comprehensive Management Analysis</h4><p>Analisis AI ditampilkan paling bawah setelah seluruh visual untuk memudahkan review manajemen.</p></div>
                                     <span class="ai-badge">EXECUTIVE</span>
@@ -3377,6 +3403,7 @@ ${JSON.stringify(payload)}`;
                 try { data=raw ? JSON.parse(raw) : {}; } catch(e) { throw new Error(`Respons Worker bukan JSON: ${raw.slice(0,300)}`); }
                 if(!res.ok) throw new Error(data?.error||data?.message||`HTTP ${res.status}`);
                 const text=(data.analysis||data.text||data.output_text||'').trim();
+                window.lastAIAnalysisText = text;
                 if(!text) throw new Error(`Worker berhasil tetapi tidak mengembalikan teks analisis. Respons: ${raw.slice(0,500)}`);
 
                 result.innerHTML=`<div class="prose-ai"><div class="ai-provenance"><span><i class="ph-fill ph-sparkle"></i> GEMINI ${data.model||GEMINI_MODEL}</span><span>Executive Analysis</span></div>${renderAIText(text)}</div>`;
@@ -4050,6 +4077,25 @@ ${JSON.stringify(payload)}`;
       }
     });
     </script>
+<script>
+// ===== AI EXECUTIVE VOICE PRESENTATION V16 =====
+(function(){
+ let scenes=[],idx=0,active=false,timer=null,started=0;
+ const clean=t=>String(t||'').replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/\*\*/g,'').replace(/#{1,4}\s*/g,'').replace(/\s+/g,' ').trim();
+ function sections(text){const raw=String(text||''),m=[...raw.matchAll(/(?:^|\n)\s*([A-I])\.?\s*([^\n:]{2,80})\s*:?/gi)],o={};for(let i=0;i<m.length;i++){const k=m[i][1].toUpperCase(),st=m[i].index+m[i][0].length,en=i+1<m.length?m[i+1].index:raw.length;o[k]=clean(raw.slice(st,en));}return o;}
+ function local(){const d=buildAIAnalyticsData(),pi=d.dailyTrend.reduce((a,b)=>b.inZak>a.inZak?b:a,{day:0,inZak:0}),po=d.dailyTrend.reduce((a,b)=>b.outZak>a.outZak?b:a,{day:0,outZak:0}),ai=d.dailyTrend.length?d.dailyTrend.reduce((a,b)=>a+b.inZak,0)/d.dailyTrend.length:0,ao=d.dailyTrend.length?d.dailyTrend.reduce((a,b)=>a+b.outZak,0)/d.dailyTrend.length:0,top=d.topStockSku.slice(0,5).reduce((a,b)=>a+b.qtyTon,0),out=d.skuMovementTop.filter(x=>x.outTon>0).sort((a,b)=>b.outTon-a.outTon).slice(0,5),outTon=out.reduce((a,b)=>a+b.outTon,0),seg=Object.entries(d.segmentTon).sort((a,b)=>b[1]-a[1])[0];return{intro:'Selamat datang di AI Stock Intelligence Dashboard. Saya akan menjelaskan kondisi Finished Goods Stock dari awal sampai akhir berdasarkan data dashboard yang tersedia.',kpi:`Posisi saat ini adalah ${fmtDec(d.totalFGTon)} Ton Finished Goods dengan ${fmtNum(d.activeSku)} SKU aktif. Inbound bulan berjalan sebesar ${fmtNum(d.monthInZak)} ZAK dan outbound sebesar ${fmtNum(d.monthOutZak)} ZAK. Utilisasi gudang berada di ${fmtDec(d.warehouseUtilizationPct)} persen.`,trend:`Pada trend harian, rata-rata inbound sebesar ${fmtNum(ai)} ZAK per hari dan outbound ${fmtNum(ao)} ZAK per hari. Peak inbound terjadi pada hari ${pi.day} sebesar ${fmtNum(pi.inZak)} ZAK, sedangkan peak outbound terjadi pada hari ${po.day} sebesar ${fmtNum(po.outZak)} ZAK.`,net:`Net movement bulan berjalan adalah ${fmtNum(Math.abs(d.monthNetZak))} ZAK ${d.monthNetZak>0?'positif, sehingga stok cenderung bertambah.':d.monthNetZak<0?'negatif, sehingga stok cenderung berkurang.':'dan flow inbound outbound relatif berimbang.'}`,top:`Lima SKU dengan stock terbesar menyumbang sekitar ${fmtDec(top)} Ton. Konsentrasi pada SKU utama ini penting karena pengelolaannya memberikan dampak terbesar terhadap kapasitas gudang dan nilai stock.`,outflow:`Lima SKU dengan outflow tertinggi menyumbang sekitar ${fmtDec(outTon)} Ton pada periode MTD. SKU tersebut menjadi prioritas monitoring coverage, replenishment, dan risiko stock-out.${out[0]?` SKU dengan outflow tertinggi adalah ${out[0].sku} sebesar ${fmtDec(out[0].outTon)} Ton.`:''}`,segment:seg?`Segment ${seg[0]} merupakan kontribusi terbesar dengan ${fmtDec(seg[1])} Ton atau sekitar ${fmtDec(d.totalFGTon?seg[1]/d.totalFGTon*100:0)} persen dari total Finished Goods.`:'Data segment belum tersedia untuk dijelaskan.',risk:'Berikutnya adalah pemeriksaan risiko dan kapasitas. Fokus utama adalah utilisasi gudang, arah net movement, konsentrasi SKU, dan SKU dengan outflow tinggi. Keputusan operasional sebaiknya mengikuti risiko yang paling material berdasarkan angka aktual dashboard.',closing:'Presentasi analisis selesai. Untuk management takeaway, fokus keputusan adalah menjaga keseimbangan inbound dan outbound, mengendalikan kapasitas gudang, memprioritaskan SKU dengan konsentrasi stock tinggi, menjaga availability SKU dengan outflow tinggi, dan melakukan monitoring risiko secara berkala.'};}
+ function build(){const l=local(),s=sections(window.lastAIAnalysisText||'');return[{name:'Opening — AI Executive Briefing',target:null,text:l.intro},{name:'KPI Snapshot — Current Stock Position',target:'#aiKpiFocus',text:s.A||l.kpi},{name:'Trend IN vs OUT',target:'#aiSceneTrend',text:s.B?`${l.trend} ${s.B}`:l.trend},{name:'Daily Net Movement',target:'#aiSceneNet',text:l.net},{name:'Top 10 SKU — Stock Concentration',target:'#aiSceneTopSku',text:s.D?`${l.top} ${s.D}`:l.top},{name:'Top SKU — Outflow Priority',target:'#aiSceneOutflow',text:l.outflow},{name:'Segment Mix',target:'#aiSceneSegment',text:s.E?`${l.segment} ${s.E}`:l.segment},{name:'Risk & Capacity Check',target:'#aiSceneRisk',text:s.F?`${l.risk} ${s.F}`:l.risk},{name:'Management Takeaway — Closing',target:'#aiFinalAnalysisSection',text:s.I?`${s.H||''} ${s.I}`.trim():`${s.G||''} ${l.closing}`.trim()}];}
+ function ui(){const sc=scenes[idx],total=scenes.length||9;document.getElementById('aiPresentationScene')?.replaceChildren(document.createTextNode(sc?.name||'Presentasi'));const st=document.getElementById('aiPresentationStep');if(st)st.textContent=`${idx+1} / ${total}`;const p=document.getElementById('aiPresentationProgress');if(p)p.style.width=`${Math.round((idx/Math.max(1,total-1))*100)}%`;}
+ function focus(sc){document.querySelectorAll('.ai-presentation-target,#aiKpiFocus').forEach(e=>e.classList.remove('ai-present-active','ai-present-dim'));if(sc.target){const el=document.querySelector(sc.target);if(el){el.classList.add('ai-present-active');el.scrollIntoView({behavior:'smooth',block:'center'});}}document.querySelectorAll('.ai-chart-section').forEach(e=>{if(sc.target&&('#'+e.id)!==sc.target)e.classList.add('ai-present-dim');});document.getElementById('aiPresentationBar')?.classList.add('ai-presentation-reading');}
+ function speak(){if(!active)return;if(idx>=scenes.length){finish();return;}const sc=scenes[idx];focus(sc);ui();if(!('speechSynthesis'in window)){setTimeout(next,3500);return;}window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(clean(sc.text));u.lang='id-ID';u.rate=.93;u.pitch=1;u.volume=1;const vs=window.speechSynthesis.getVoices(),v=vs.find(x=>/^id(-|_)/i.test(x.lang))||vs.find(x=>/indones/i.test(x.name));if(v)u.voice=v;u.onstart=()=>document.getElementById('aiPresentationBar')?.classList.add('ai-speaking');u.onend=()=>{document.getElementById('aiPresentationBar')?.classList.remove('ai-speaking');next();};u.onerror=()=>setTimeout(next,500);window.speechSynthesis.speak(u);}
+ function next(){if(!active)return;idx++;if(idx>=scenes.length)finish();else speak();}
+ function finish(){active=false;try{window.speechSynthesis?.cancel();}catch(e){}clearInterval(timer);document.getElementById('aiPresentationBar')?.classList.remove('ai-speaking','ai-presentation-reading');document.querySelectorAll('.ai-presentation-target,#aiKpiFocus').forEach(e=>e.classList.remove('ai-present-active','ai-present-dim'));const p=document.getElementById('aiPresentationProgress');if(p)p.style.width='100%';const t=document.getElementById('aiPresentationScene');if(t)t.textContent='Presentasi selesai — Management Takeaway siap direview.';const b=document.getElementById('aiPresentBtn');if(b)b.innerHTML='<i class="ph-bold ph-play"></i> Present Again';}
+ window.startAIPresentation=function(){if(!window.lastAIAnalysisText){showToast('AI Presentation','Klik Analyze terlebih dahulu agar narasi mengikuti hasil AI.','warning');return;}scenes=build();idx=0;active=true;started=Date.now();document.getElementById('aiPresentationBar')?.classList.remove('hidden');const b=document.getElementById('aiPresentBtn');if(b)b.innerHTML='<i class="ph-bold ph-waveform"></i> Presenting...';clearInterval(timer);timer=setInterval(()=>{if(!active)return;const sec=Math.floor((Date.now()-started)/1000),el=document.getElementById('aiPresentationTime');if(el)el.textContent=`${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;},500);speak();};
+ window.pauseAIPresentation=function(){if(active&&'speechSynthesis'in window){window.speechSynthesis.pause();document.getElementById('aiPresentationBar')?.classList.remove('ai-speaking');}};
+ window.resumeAIPresentation=function(){if(active&&'speechSynthesis'in window){window.speechSynthesis.resume();document.getElementById('aiPresentationBar')?.classList.add('ai-speaking');}};
+ window.stopAIPresentation=function(){finish();};
+})();
+</script>
 </body>
 </html            updateLiveStockTicker();
 >
