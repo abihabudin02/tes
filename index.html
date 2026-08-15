@@ -204,7 +204,27 @@
         .ai-empty-state p { color:#fff; font-weight:800; font-size:13px; }
         .ai-empty-state small { margin-top:4px; font-size:10px; }
         @media (max-width: 900px) { .ai-chart-lg { height:300px; } .ai-chart-xl { height:340px; } .ai-dashboard-shell .ai-kpi-card strong { font-size:18px; } }
-    </style>
+    
+        .live-ticker-track {
+            animation: liveTickerScroll 36s linear infinite;
+            min-width: max-content;
+        }
+        .live-ticker-track:hover { animation-play-state: paused; }
+        .live-ticker-item {
+            display:inline-flex; align-items:center; gap:.45rem;
+            padding:.55rem .8rem; border:1px solid rgba(255,255,255,.08);
+            border-radius:999px; background:rgba(255,255,255,.025);
+            color:#d9deec; font-size:10px;
+        }
+        .live-ticker-item b { color:#fff; }
+        .live-ticker-item .good { color:#00D084; }
+        .live-ticker-item .warn { color:#FFB800; }
+        .live-ticker-item .bad { color:#FF4D6D; }
+        @keyframes liveTickerScroll {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+</style>
 </head>
 <body class="flex h-screen w-full overflow-hidden bg-bgPrimary">
 
@@ -579,6 +599,23 @@
                     </div>
                 </div>
             </div>
+
+            <!-- LIVE STOCK MOVEMENT TICKER -->
+            <section id="liveStockTicker" class="mb-6 md:mb-8 rounded-2xl border border-borderMain bg-bgCard/70 overflow-hidden shadow-glass">
+                <div class="flex items-center gap-3 px-4 py-2.5 border-b border-borderMain/60 bg-bgPrimary/50">
+                    <div id="liveTickerBadge" class="px-2 py-1 rounded-lg bg-statusSuccess/10 text-statusSuccess border border-statusSuccess/20 text-[9px] font-black tracking-widest uppercase flex items-center gap-1.5 whitespace-nowrap">
+                        <span class="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span> LIVE STOCK MONITOR
+                    </div>
+                    <div id="liveTickerUpdated" class="text-[9px] text-textSecondary whitespace-nowrap">Update: --</div>
+                    <div class="ml-auto text-[9px] text-textSecondary hidden sm:block">Auto insight • refresh mengikuti sinkronisasi data</div>
+                </div>
+                <div class="relative overflow-hidden">
+                    <div id="liveTickerTrack" class="live-ticker-track py-3 px-4 whitespace-nowrap flex gap-4 w-max">
+                        <span class="live-ticker-item">Menyiapkan live stock insight...</span>
+                    </div>
+                </div>
+                <div id="liveTickerAlert" class="hidden px-4 py-2.5 text-[10px] font-bold border-t border-statusDanger/20 bg-statusDanger/10 text-statusDanger"></div>
+            </section>
 
             <!-- MAIN TAB CONTENT AREA -->
             <div id="mainViewContainer" class="w-full">
@@ -1636,6 +1673,93 @@
             const item = execReportData.find(i => i.segment === segment && i.sku === sku);
             if (item) item[field] = value ? parseInt(value, 10) : '';
         };
+
+
+        function updateLiveStockTicker() {
+            const container = document.getElementById('liveStockTicker');
+            const track = document.getElementById('liveTickerTrack');
+            const alert = document.getElementById('liveTickerAlert');
+            const updated = document.getElementById('liveTickerUpdated');
+            const badge = document.getElementById('liveTickerBadge');
+            if (!container || !track) return;
+
+            const num = v => Number.isFinite(Number(v)) ? Number(v) : 0;
+            const totalStockTon = summaryData.reduce((a,b)=>a+num(b.qtyTon),0);
+            const retailTon = summaryData.filter(x=>String(x.segment||'').toUpperCase()==='RETAIL').reduce((a,b)=>a+num(b.qtyTon),0);
+            const projectTon = summaryData.filter(x=>String(x.segment||'').toUpperCase()==='PROJECT').reduce((a,b)=>a+num(b.qtyTon),0);
+            const generalTon = summaryData.filter(x=>String(x.segment||'').toUpperCase()==='GENERAL').reduce((a,b)=>a+num(b.qtyTon),0);
+            const capacityTon = 2737;
+
+            const now = new Date();
+            const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+            const currentDateKey = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            let todayInTon=0, todayOutTon=0, mtdInTon=0, mtdOutTon=0;
+            const activeDays = new Set();
+            const daily = {};
+
+            (transactionRecords||[]).forEach(rec=>{
+                if(!rec?.dateObj || isNaN(rec.dateObj.getTime())) return;
+                if(rec.dateObj.getFullYear()!==y || rec.dateObj.getMonth()!==m) return;
+                const key = `${y}-${String(m+1).padStart(2,'0')}-${String(rec.dateObj.getDate()).padStart(2,'0')}`;
+                const type=String(rec.type||'').toUpperCase();
+                const isIn=type.includes('IN')||type.includes('MASUK')||type.includes('PRODUCTION')||type.includes('PRODUKSI');
+                const isOut=type.includes('OUT')||type.includes('KELUAR')||type.includes('OFFTAKE')||type.includes('DELIVERY')||type.includes('KIRIM');
+                if(!isIn && !isOut) return;
+                const zak=num(rec.zak);
+                const ton=num(rec.ton) || (zak*(num(rec.weight)||40)/1000);
+                activeDays.add(key);
+                if(!daily[key]) daily[key]={inTon:0,outTon:0};
+                if(isIn){ mtdInTon+=ton; daily[key].inTon+=ton; if(key===currentDateKey) todayInTon+=ton; }
+                if(isOut){ mtdOutTon+=ton; daily[key].outTon+=ton; if(key===currentDateKey) todayOutTon+=ton; }
+            });
+
+            const days = Math.max(activeDays.size,1);
+            const avgIn = mtdInTon/days;
+            const avgOut = mtdOutTon/days;
+            const net = mtdInTon-mtdOutTon;
+            const trendPct = mtdOutTon>0 ? (net/mtdOutTon)*100 : (net>0?100:0);
+            const util = capacityTon>0 ? (totalStockTon/capacityTon)*100 : 0;
+            const remaining = capacityTon-totalStockTon;
+
+            const trendText = net>0
+                ? `<span class="good">▲ Bertambah</span> +${fmtDec(net)} Ton (${fmtDec(trendPct)}%)`
+                : net<0
+                ? `<span class="bad">▼ Berkurang</span> ${fmtDec(Math.abs(net))} Ton (${fmtDec(Math.abs(trendPct))}%)`
+                : `<span>■ Stabil</span> 0 Ton`;
+
+            const utilClass = util>=100 ? 'bad' : util>=85 ? 'warn' : 'good';
+            badge.className = `px-2 py-1 rounded-lg ${util>=100?'bg-statusDanger/10 text-statusDanger border-statusDanger/20':util>=85?'bg-statusWarning/10 text-statusWarning border-statusWarning/20':'bg-statusSuccess/10 text-statusSuccess border-statusSuccess/20'} text-[9px] font-black tracking-widest uppercase flex items-center gap-1.5 whitespace-nowrap`;
+            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span> ${util>=100?'CAPACITY ALERT':util>=85?'CAPACITY WATCH':'LIVE STOCK MONITOR'}`;
+
+            const items=[
+                `📦 <b>Stok Saat Ini:</b> <b>${fmtDec(totalStockTon)} Ton</b>`,
+                `🛍️ <b>Retail:</b> <b>${fmtDec(retailTon)} Ton</b>`,
+                `🏗️ <b>Project:</b> <b>${fmtDec(projectTon)} Ton</b>`,
+                `◼️ <b>General:</b> <b>${fmtDec(generalTon)} Ton</b>`,
+                `🏭 <b>Kapasitas:</b> <span class="${utilClass}">${fmtDec(util)}% terpakai</span> • Sisa <b>${fmtDec(remaining)} Ton</b>`,
+                `⬆️ <b>IN Hari Ini:</b> <b>${fmtDec(todayInTon)} Ton</b>`,
+                `⬇️ <b>OUT Hari Ini:</b> <b>${fmtDec(todayOutTon)} Ton</b>`,
+                `📥 <b>IN MTD:</b> <b>${fmtDec(mtdInTon)} Ton</b>`,
+                `📤 <b>OUT MTD:</b> <b>${fmtDec(mtdOutTon)} Ton</b>`,
+                `📊 <b>Tren MTD:</b> ${trendText}`,
+                `⏱️ <b>Rata-rata/Hari:</b> IN <b>${fmtDec(avgIn)} Ton</b> • OUT <b>${fmtDec(avgOut)} Ton</b>`,
+                `📈 <b>Selisih Rata-rata:</b> <b>${fmtDec(avgIn-avgOut)} Ton/Hari</b>`
+            ];
+            const html = items.map(x=>`<span class="live-ticker-item">${x}</span>`).join('');
+            track.innerHTML = html + html;
+            updated.innerText = `Update: ${now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})} WIB`;
+
+            if(util>=100){
+                alert.classList.remove('hidden');
+                alert.innerHTML = `⚠️ <b>WARNING KAPASITAS GUDANG:</b> stok ${fmtDec(totalStockTon)} Ton sudah ${fmtDec(util)}% dari kapasitas ${fmtDec(capacityTon)} Ton. Segera prioritaskan outbound/replenishment control dan evaluasi over-capacity.`;
+            } else if(util>=85){
+                alert.classList.remove('hidden');
+                alert.className='px-4 py-2.5 text-[10px] font-bold border-t border-statusWarning/20 bg-statusWarning/10 text-statusWarning';
+                alert.innerHTML = `⚠️ <b>CAPACITY WATCH:</b> utilisasi gudang ${fmtDec(util)}%. Sisa kapasitas ${fmtDec(remaining)} Ton.`;
+            } else {
+                alert.classList.add('hidden');
+            }
+        }
 
         function updateKPIs() {
             let totalWeight = 0, totalZakSummary = 0, totalTon = 0;
@@ -3789,4 +3913,8 @@ ${JSON.stringify(payload)}`;
     });
     </script>
 </body>
-</html>
+</html            updateLiveStockTicker();
+>
+<script>
+setInterval(()=>{ try{ if(typeof updateLiveStockTicker==='function') updateLiveStockTicker(); }catch(e){} }, 60000);
+</script>
