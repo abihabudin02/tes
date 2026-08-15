@@ -2697,7 +2697,7 @@
         // AI STOCK ANALYST V2 / GEMINI
         // =========================
         const AI_PROXY_ENDPOINT = 'https://lms-stock-ai-proxy.abihabudin-02.workers.dev/analyze';
-        const GEMINI_MODEL = 'gemini-2.5-flash';
+        const GEMINI_MODEL = 'gemini-3.6-flash';
 
         function openGeminiSettings() {
             const modal = document.getElementById('geminiSettingsModal');
@@ -2969,7 +2969,7 @@
 
             btn.disabled=true;
             btn.innerHTML='<i class="ph-bold ph-spinner-gap animate-spin"></i> Analyzing...';
-            status.innerText='Mengirim data MTD, SKU, segment, dan trend transaksi ke AI Analyst...';
+            status.innerText='Mengirim data MTD, SKU, segment, dan trend transaksi ke Gemini 3.6 Flash...';
 
             const prompt = `Anda adalah Senior Supply Chain & Warehouse Executive Analyst untuk perusahaan mortar.
 Analisis DATA DASHBOARD JSON secara mendalam, objektif, dan berbasis angka. Jangan mengarang angka dan jangan menambahkan asumsi seolah-olah fakta.
@@ -3003,11 +3003,11 @@ ${JSON.stringify(payload)}`;
 
                 result.innerHTML=`
                     <div class="rounded-xl border border-accentPurple/20 bg-accentPurple/5 p-4 md:p-5">
-                        <div class="flex items-center gap-2 mb-4"><i class="ph-fill ph-sparkle text-accentPurple"></i><h4 class="text-white font-black text-sm">AI Executive Insight V2</h4><span class="ml-auto text-[8px] px-2 py-1 rounded bg-statusSuccess/10 text-statusSuccess border border-statusSuccess/20">GEMINI</span></div>
+                        <div class="flex items-center gap-2 mb-4"><i class="ph-fill ph-sparkle text-accentPurple"></i><h4 class="text-white font-black text-sm">AI Executive Insight V3</h4><span class="ml-auto text-[8px] px-2 py-1 rounded bg-statusSuccess/10 text-statusSuccess border border-statusSuccess/20">GEMINI</span></div>
                         <div class="text-[11px] text-textSecondary leading-relaxed">${renderAIText(text)}</div>
                     </div>`;
                 status.innerText='Analisis AI selesai. Visual dan insight sudah diperbarui.';
-                showToast('AI Analysis','Analisis detail berhasil dibuat.','success');
+                showToast('AI Analysis','Analisis detail berhasil dibuat dengan Gemini 3.6 Flash.','success');
             }catch(err){
                 console.error(err);
                 renderLocalAI();
