@@ -169,6 +169,41 @@
         @media (min-width: 1024px) {
             .sidebar-closed { transform: translateX(0); }
         }
+
+        .ai-dashboard-shell { width: 100%; }
+        .ai-dashboard-shell .ai-kpi-card { background: rgba(7,11,20,.58); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px; min-height:110px; display:flex; flex-direction:column; justify-content:space-between; }
+        .ai-dashboard-shell .ai-kpi-card span { font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:#B8C0D9; font-weight:700; }
+        .ai-dashboard-shell .ai-kpi-card strong { margin-top:8px; font-size:22px; line-height:1.1; color:#fff; font-family:'JetBrains Mono',monospace; }
+        .ai-dashboard-shell .ai-kpi-card small { margin-top:8px; font-size:9px; color:#7E89A8; }
+        .ai-dashboard-shell .ai-kpi-success strong { color:#00D084; }
+        .ai-dashboard-shell .ai-kpi-danger strong { color:#FF4D6D; }
+        .ai-chart-section { background:rgba(14,22,40,.55); border:1px solid rgba(255,255,255,.07); border-radius:18px; padding:16px; }
+        .ai-section-header, .ai-final-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+        .ai-section-header h4, .ai-final-header h4 { margin:0; color:#fff; font-size:13px; font-weight:800; display:flex; align-items:center; gap:8px; }
+        .ai-section-header h4 i, .ai-final-header h4 i { color:#00E5FF; }
+        .ai-section-header p, .ai-final-header p { margin-top:4px; color:#7E89A8; font-size:10px; line-height:1.5; }
+        .ai-badge { flex:none; font-size:8px; font-weight:800; letter-spacing:.1em; padding:5px 8px; border-radius:999px; background:rgba(109,93,246,.12); border:1px solid rgba(109,93,246,.25); color:#A69BFF; }
+        .ai-badge-warn { background:rgba(255,184,0,.1); border-color:rgba(255,184,0,.25); color:#FFB800; }
+        .ai-chart-box { position:relative; width:100%; }
+        .ai-chart-lg { height:360px; }
+        .ai-chart-xl { height:430px; }
+        .ai-chart-insight { margin-top:14px; padding:14px; border-radius:14px; background:rgba(7,11,20,.62); border:1px solid rgba(255,255,255,.06); color:#B8C0D9; font-size:11px; line-height:1.7; }
+        .ai-chart-insight .title { color:#fff; font-weight:800; margin-bottom:5px; }
+        .ai-chart-insight .metric { color:#00E5FF; font-family:'JetBrains Mono',monospace; font-weight:700; }
+        .ai-chart-insight .risk { color:#FFB800; font-weight:700; }
+        .ai-final-analysis { background:linear-gradient(180deg,rgba(109,93,246,.12),rgba(7,11,20,.5)); border:1px solid rgba(109,93,246,.28); border-radius:20px; padding:18px; }
+        .ai-final-content { background:rgba(7,11,20,.52); border-radius:14px; padding:16px; color:#B8C0D9; font-size:12px; line-height:1.85; min-height:180px; }
+        .ai-final-content strong { color:#fff; }
+        .ai-empty-state { min-height:180px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#7E89A8; }
+
+        .prose-ai { color:#B8C0D9; line-height:1.9; font-size:12px; }
+        .prose-ai .ai-provenance { display:flex; justify-content:space-between; gap:10px; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,.07); color:#7E89A8; font-size:9px; text-transform:uppercase; letter-spacing:.08em; }
+        .prose-ai .ai-provenance span:first-child { color:#A69BFF; font-weight:800; }
+        .prose-ai strong { color:#FFFFFF; }
+        .ai-empty-state i { font-size:42px; color:#6D5DF6; margin-bottom:8px; }
+        .ai-empty-state p { color:#fff; font-weight:800; font-size:13px; }
+        .ai-empty-state small { margin-top:4px; font-size:10px; }
+        @media (max-width: 900px) { .ai-chart-lg { height:300px; } .ai-chart-xl { height:340px; } .ai-dashboard-shell .ai-kpi-card strong { font-size:18px; } }
     </style>
 </head>
 <body class="flex h-screen w-full overflow-hidden bg-bgPrimary">
@@ -628,61 +663,98 @@
                     </div>
                 </div>
 
-                <!-- TAB: AI STOCK ANALYST -->
-                <div id="view-ai-analyst" class="hidden w-full">
-                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
-                        <div class="xl:col-span-2 glass-panel rounded-2xl border border-borderMain overflow-hidden min-h-[620px] flex flex-col">
-                            <div class="p-4 md:p-6 border-b border-borderMain bg-bgCard/90 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                <div>
-                                    <h3 class="font-black text-white text-base md:text-lg flex items-center gap-2"><i class="ph-fill ph-sparkle text-accentPurple"></i> AI Stock Analyst</h3>
-                                    <p class="text-[10px] md:text-xs text-textSecondary mt-1">Analisis Finished Goods berdasarkan data yang sudah tersinkron dari Google Sheets.</p>
+                <!-- TAB: AI STOCK ANALYST V4 -->
+                <div id="view-ai-analyst" class="hidden w-full ai-dashboard-shell">
+                    <div class="glass-panel rounded-2xl border border-borderMain overflow-hidden w-full">
+                        <div class="p-4 md:p-6 border-b border-borderMain bg-bgCard/90 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <i class="ph-fill ph-sparkle text-accentPurple text-xl"></i>
+                                    <h3 class="font-black text-white text-lg md:text-xl">AI Stock Intelligence Dashboard</h3>
+                                    <span class="text-[8px] px-2 py-1 rounded bg-accentPurple/10 text-accentPurple border border-accentPurple/20 font-bold">COMPREHENSIVE</span>
                                 </div>
-                                <div class="flex gap-2 w-full md:w-auto">
-                                    <button onclick="openGeminiSettings()" class="flex-1 md:flex-none justify-center px-3 py-2 bg-bgPrimary border border-borderMain rounded-xl text-textSecondary hover:text-white text-[10px] font-semibold flex items-center gap-2"><i class="ph-bold ph-gear"></i> Gemini Settings</button>
-                                    <button onclick="runAIStockAnalysis()" id="aiAnalyzeBtn" class="flex-1 md:flex-none justify-center px-4 py-2 bg-gradient-to-r from-accentPurple to-pink-500 text-white font-bold rounded-xl shadow-glow-purple text-[10px] flex items-center gap-2"><i class="ph-bold ph-sparkle"></i> Analyze</button>
-                                </div>
+                                <p class="text-[10px] md:text-xs text-textSecondary mt-1">Executive Supply Chain analysis: KPI, trend, SKU, segment, risk, actions & management takeaway.</p>
                             </div>
-                            <div class="p-4 md:p-6 flex-1 overflow-y-auto">
-                                <div id="aiStatusBox" class="rounded-xl border border-accentPurple/20 bg-accentPurple/5 p-4 mb-5">
-                                    <div class="flex items-start gap-3"><i class="ph-fill ph-info text-accentPurple text-xl mt-0.5"></i><div><p class="text-white text-xs font-bold">Siap menganalisis</p><p id="aiStatusText" class="text-[10px] text-textSecondary mt-1">Klik Analyze untuk mengirim data MTD, SKU, segment, dan trend transaksi ke Gemini melalui Cloudflare Worker. Visual AI akan ikut diperbarui.</p></div></div>
-                                </div>
-                                <div id="aiResult" class="space-y-4">
-                                    <div class="rounded-xl border border-borderMain bg-bgPrimary/40 p-5 text-center">
-                                        <i class="ph-fill ph-brain text-4xl text-accentPurple mb-2"></i>
-                                        <p class="text-white text-sm font-bold">AI Executive Insight</p>
-                                        <p class="text-[10px] text-textSecondary mt-1">Belum ada analisis. Pastikan data sudah tersinkron.</p>
-                                    </div>
-                                </div>
+                            <div class="flex gap-2 w-full xl:w-auto">
+                                <button onclick="openGeminiSettings()" class="flex-1 xl:flex-none justify-center px-3 py-2 bg-bgPrimary border border-borderMain rounded-xl text-textSecondary hover:text-white text-[10px] font-semibold flex items-center gap-2"><i class="ph-bold ph-gear"></i> Worker Settings</button>
+                                <button onclick="runAIStockAnalysis()" id="aiAnalyzeBtn" class="flex-1 xl:flex-none justify-center px-5 py-2 bg-gradient-to-r from-accentPurple to-pink-500 text-white font-bold rounded-xl shadow-glow-purple text-[10px] flex items-center gap-2"><i class="ph-bold ph-sparkle"></i> Analyze</button>
                             </div>
                         </div>
-                        <div class="flex flex-col gap-4 md:gap-6">
-                            <div class="glass-panel rounded-2xl border border-borderMain p-4 md:p-5">
-                                <h4 class="text-white text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2"><i class="ph-fill ph-chart-line-up text-accentCyan"></i> AI Snapshot</h4>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div class="bg-bgPrimary/50 rounded-xl p-3 border border-borderMain"><span class="text-[9px] text-textSecondary">FG Stock</span><div id="aiSnapTon" class="text-lg font-black text-white font-mono mt-1">0 Ton</div></div>
-                                    <div class="bg-bgPrimary/50 rounded-xl p-3 border border-borderMain"><span class="text-[9px] text-textSecondary">SKU Aktif</span><div id="aiSnapSku" class="text-lg font-black text-white font-mono mt-1">0</div></div>
-                                    <div class="bg-bgPrimary/50 rounded-xl p-3 border border-borderMain"><span class="text-[9px] text-textSecondary">IN Bulan Ini</span><div id="aiSnapIn" class="text-lg font-black text-statusSuccess font-mono mt-1">0</div></div>
-                                    <div class="bg-bgPrimary/50 rounded-xl p-3 border border-borderMain"><span class="text-[9px] text-textSecondary">OUT Bulan Ini</span><div id="aiSnapOut" class="text-lg font-black text-statusDanger font-mono mt-1">0</div></div>
+
+                        <div class="p-4 md:p-6 space-y-6">
+                            <div id="aiStatusBox" class="rounded-xl border border-accentPurple/20 bg-accentPurple/5 p-4">
+                                <div class="flex items-start gap-3"><i class="ph-fill ph-info text-accentPurple text-xl mt-0.5"></i><div><p class="text-white text-xs font-bold">AI Analysis Ready</p><p id="aiStatusText" class="text-[10px] text-textSecondary mt-1">Klik Analyze untuk menganalisis seluruh dataset MTD dan menghasilkan insight eksekutif.</p></div></div>
+                            </div>
+
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                                <div class="ai-kpi-card"><span>FG Stock</span><strong id="aiSnapTon">0 Ton</strong><small>Current balance</small></div>
+                                <div class="ai-kpi-card"><span>SKU Aktif</span><strong id="aiSnapSku">0</strong><small>Active SKU</small></div>
+                                <div class="ai-kpi-card ai-kpi-success"><span>IN Bulan Ini</span><strong id="aiSnapIn">0</strong><small>Inbound</small></div>
+                                <div class="ai-kpi-card ai-kpi-danger"><span>OUT Bulan Ini</span><strong id="aiSnapOut">0</strong><small>Outbound</small></div>
+                            </div>
+
+                            <section class="ai-chart-section">
+                                <div class="ai-section-header">
+                                    <div><h4><i class="ph-fill ph-chart-line-up"></i> 1. Trend IN vs OUT</h4><p>Pergerakan inbound dan outbound harian MTD.</p></div>
+                                    <span class="ai-badge">TREND</span>
                                 </div>
-                            </div>
-                            <div class="glass-panel rounded-2xl border border-borderMain p-4 md:p-5">
-                                <h4 class="text-white text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2"><i class="ph-fill ph-chart-line text-accentCyan"></i> AI Trend</h4>
-                                <div class="h-[220px] relative"><canvas id="aiTrendChart"></canvas></div>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="glass-panel rounded-2xl border border-borderMain p-4 md:p-5">
-                                    <h4 class="text-white text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2"><i class="ph-fill ph-chart-bar text-accentPurple"></i> Top SKU</h4>
-                                    <div class="h-[260px] relative"><canvas id="aiTopSkuChart"></canvas></div>
+                                <div class="ai-chart-box ai-chart-xl"><canvas id="aiTrendChart"></canvas></div>
+                                <div id="aiTrendInsight" class="ai-chart-insight"></div>
+                            </section>
+
+                            <section class="ai-chart-section">
+                                <div class="ai-section-header">
+                                    <div><h4><i class="ph-fill ph-chart-bar"></i> 2. Daily Net Movement</h4><p>Selisih IN - OUT untuk melihat hari akumulasi dan deplesi stok.</p></div>
+                                    <span class="ai-badge">NET FLOW</span>
                                 </div>
-                                <div class="glass-panel rounded-2xl border border-borderMain p-4 md:p-5">
-                                    <h4 class="text-white text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2"><i class="ph-fill ph-chart-donut text-statusWarning"></i> Segment Mix</h4>
-                                    <div class="h-[260px] relative"><canvas id="aiSegmentChart"></canvas></div>
+                                <div class="ai-chart-box ai-chart-lg"><canvas id="aiNetMovementChart"></canvas></div>
+                                <div id="aiNetMovementInsight" class="ai-chart-insight"></div>
+                            </section>
+
+                            <section class="ai-chart-section">
+                                <div class="ai-section-header">
+                                    <div><h4><i class="ph-fill ph-ranking"></i> 3. Top 10 SKU berdasarkan Stock</h4><p>Konsentrasi stok terbesar pada Finished Goods.</p></div>
+                                    <span class="ai-badge">TOP SKU</span>
                                 </div>
-                            </div>
-                            <div class="glass-panel rounded-2xl border border-borderMain p-4 md:p-5">
-                                <h4 class="text-white text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2"><i class="ph-fill ph-lightbulb text-statusWarning"></i> Local Risk Check</h4>
-                                <div id="aiLocalRisk" class="space-y-2 text-[10px] text-textSecondary">Belum dihitung.</div>
-                            </div>
+                                <div class="ai-chart-box ai-chart-xl"><canvas id="aiTopSkuChart"></canvas></div>
+                                <div id="aiTopSkuInsight" class="ai-chart-insight"></div>
+                            </section>
+
+                            <section class="ai-chart-section">
+                                <div class="ai-section-header">
+                                    <div><h4><i class="ph-fill ph-trend-up"></i> 4. Top SKU berdasarkan OUTFLOW</h4><p>SKU dengan pergerakan keluar paling besar pada periode MTD.</p></div>
+                                    <span class="ai-badge">OUTFLOW</span>
+                                </div>
+                                <div class="ai-chart-box ai-chart-xl"><canvas id="aiOutflowChart"></canvas></div>
+                                <div id="aiOutflowInsight" class="ai-chart-insight"></div>
+                            </section>
+
+                            <section class="ai-chart-section">
+                                <div class="ai-section-header">
+                                    <div><h4><i class="ph-fill ph-chart-donut"></i> 5. Segment Mix</h4><p>Komposisi stock berdasarkan RETAIL, PROJECT, GENERAL dan segment lain yang tersedia.</p></div>
+                                    <span class="ai-badge">SEGMENT</span>
+                                </div>
+                                <div class="ai-chart-box ai-chart-lg"><canvas id="aiSegmentChart"></canvas></div>
+                                <div id="aiSegmentInsight" class="ai-chart-insight"></div>
+                            </section>
+
+                            <section class="ai-chart-section">
+                                <div class="ai-section-header">
+                                    <div><h4><i class="ph-fill ph-warning"></i> 6. Risk & Capacity Check</h4><p>Deteksi tekanan kapasitas, ketidakseimbangan flow, konsentrasi stok dan SKU prioritas.</p></div>
+                                    <span class="ai-badge ai-badge-warn">RISK</span>
+                                </div>
+                                <div id="aiLocalRisk" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 text-[10px] text-textSecondary"></div>
+                            </section>
+
+                            <section id="aiFinalAnalysisSection" class="ai-final-analysis">
+                                <div class="ai-final-header">
+                                    <div><h4><i class="ph-fill ph-brain"></i> 7. Comprehensive Management Analysis</h4><p>Analisis AI ditampilkan paling bawah setelah seluruh visual untuk memudahkan review manajemen.</p></div>
+                                    <span class="ai-badge">EXECUTIVE</span>
+                                </div>
+                                <div id="aiResult" class="ai-final-content">
+                                    <div class="ai-empty-state"><i class="ph-fill ph-brain"></i><p>Belum ada analisis AI.</p><small>Klik Analyze setelah data selesai sinkron.</small></div>
+                                </div>
+                            </section>
                         </div>
                     </div>
                 </div>
@@ -2908,9 +2980,15 @@
             document.getElementById('aiResult').innerHTML=html;
         }
 
+        function setInsight(id, html) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = html;
+        }
+
         function renderAICharts() {
             const d = buildAIAnalyticsData();
 
+            // 1) Trend IN vs OUT
             const trendCanvas = document.getElementById('aiTrendChart');
             if (trendCanvas) {
                 if (aiTrendChartInstance) aiTrendChartInstance.destroy();
@@ -2919,40 +2997,88 @@
                     data:{
                         labels:d.dailyTrend.map(x=>String(x.day)),
                         datasets:[
-                            {label:'IN (ZAK)',data:d.dailyTrend.map(x=>x.inZak),borderColor:'#00E5FF',backgroundColor:'rgba(0,229,255,.08)',tension:.35,fill:true,borderWidth:2},
-                            {label:'OUT (ZAK)',data:d.dailyTrend.map(x=>x.outZak),borderColor:'#FF4D6D',backgroundColor:'rgba(255,77,109,.08)',tension:.35,fill:true,borderWidth:2}
+                            {label:'IN (ZAK)',data:d.dailyTrend.map(x=>x.inZak),borderColor:'#00E5FF',backgroundColor:'rgba(0,229,255,.08)',tension:.35,fill:true,borderWidth:3,pointRadius:3},
+                            {label:'OUT (ZAK)',data:d.dailyTrend.map(x=>x.outZak),borderColor:'#FF4D6D',backgroundColor:'rgba(255,77,109,.08)',tension:.35,fill:true,borderWidth:3,pointRadius:3}
                         ]
                     },
-                    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#B8C0D9',font:{size:9}}}},scales:{x:{ticks:{color:'#B8C0D9',font:{size:8}}},y:{ticks:{color:'#B8C0D9',font:{size:8}}}}}
+                    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{color:'#B8C0D9',font:{size:10,weight:'bold'},usePointStyle:true}},tooltip:{callbacks:{label:(ctx)=>` ${ctx.dataset.label}: ${fmtNum(ctx.raw)} ZAK`}}},scales:{x:{ticks:{color:'#B8C0D9',font:{size:9}}},y:{ticks:{color:'#B8C0D9',font:{size:9}}}}}
                 });
             }
+            const peakIn = d.dailyTrend.reduce((a,b)=>b.inZak>a.inZak?b:a,{day:0,inZak:0});
+            const peakOut = d.dailyTrend.reduce((a,b)=>b.outZak>a.outZak?b:a,{day:0,outZak:0});
+            const avgIn = d.dailyTrend.length ? d.dailyTrend.reduce((a,b)=>a+b.inZak,0)/d.dailyTrend.length : 0;
+            const avgOut = d.dailyTrend.length ? d.dailyTrend.reduce((a,b)=>a+b.outZak,0)/d.dailyTrend.length : 0;
+            setInsight('aiTrendInsight', `<div class="title">Insight Trend</div>Rata-rata IN ${'<span class="metric">'+fmtNum(avgIn)+' ZAK/hari</span>'} dan OUT ${'<span class="metric">'+fmtNum(avgOut)+' ZAK/hari</span>'}. Peak IN terjadi pada hari ${peakIn.day} sebesar ${fmtNum(peakIn.inZak)} ZAK, sedangkan peak OUT hari ${peakOut.day} sebesar ${fmtNum(peakOut.outZak)} ZAK. ${avgIn > avgOut ? '<span class="risk">Pola saat ini cenderung menambah buffer stock.</span>' : avgOut > avgIn ? '<span class="risk">Pola saat ini cenderung mengurangi buffer stock.</span>' : 'Flow relatif berimbang.'}`);
 
+            // 2) Daily Net Movement
+            const netCanvas = document.getElementById('aiNetMovementChart');
+            if (netCanvas) {
+                if (window.aiNetMovementChartInstance) window.aiNetMovementChartInstance.destroy();
+                const colors = d.dailyTrend.map(x=>x.netZak>=0?'#00D084':'#FF4D6D');
+                window.aiNetMovementChartInstance = new Chart(netCanvas.getContext('2d'), {
+                    type:'bar',
+                    data:{labels:d.dailyTrend.map(x=>String(x.day)),datasets:[{label:'Net Movement (ZAK)',data:d.dailyTrend.map(x=>x.netZak),backgroundColor:colors,borderRadius:6}]},
+                    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>` Net: ${fmtNum(ctx.raw)} ZAK`}}},scales:{x:{ticks:{color:'#B8C0D9',font:{size:9}}},y:{ticks:{color:'#B8C0D9',font:{size:9}}}}}
+                });
+            }
+            const positiveDays = d.dailyTrend.filter(x=>x.netZak>0).length;
+            const negativeDays = d.dailyTrend.filter(x=>x.netZak<0).length;
+            const strongestDown = d.dailyTrend.reduce((a,b)=>b.netZak<a.netZak?b:a,{day:0,netZak:0});
+            const strongestUp = d.dailyTrend.reduce((a,b)=>b.netZak>a.netZak?b:a,{day:0,netZak:0});
+            setInsight('aiNetMovementInsight', `<div class="title">Insight Net Movement</div>${positiveDays} hari mencatat akumulasi bersih positif dan ${negativeDays} hari deplesi bersih. Akumulasi terkuat terjadi pada hari ${strongestUp.day} (+${fmtNum(strongestUp.netZak)} ZAK), sedangkan penurunan terdalam pada hari ${strongestDown.day} (${fmtNum(strongestDown.netZak)} ZAK). Fokus monitoring sebaiknya diarahkan ke hari dengan net negatif terbesar karena paling berpengaruh pada buffer.`);
+
+            // 3) Top stock SKU
             const topCanvas = document.getElementById('aiTopSkuChart');
             if (topCanvas) {
                 if (aiTopSkuChartInstance) aiTopSkuChartInstance.destroy();
                 const top = d.topStockSku.slice(0,10).reverse();
                 aiTopSkuChartInstance = new Chart(topCanvas.getContext('2d'), {
                     type:'bar',
-                    data:{labels:top.map(x=>x.sku),datasets:[{label:'Stock (Ton)',data:top.map(x=>x.qtyTon),backgroundColor:'rgba(109,93,246,.75)',borderColor:'#6D5DF6',borderWidth:1}]},
-                    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#B8C0D9',font:{size:8}}},y:{ticks:{color:'#B8C0D9',font:{size:8}}}}}
+                    data:{labels:top.map(x=>x.sku),datasets:[{label:'Stock (Ton)',data:top.map(x=>x.qtyTon),backgroundColor:'rgba(109,93,246,.78)',borderColor:'#6D5DF6',borderWidth:1,borderRadius:6}]},
+                    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>` Stock: ${fmtDec(ctx.raw)} Ton`}}},scales:{x:{ticks:{color:'#B8C0D9',font:{size:9}}},y:{ticks:{color:'#B8C0D9',font:{size:10}}}}}
                 });
             }
+            const top10 = d.topStockSku.slice(0,10);
+            const top5Ton = top10.slice(0,5).reduce((a,b)=>a+b.qtyTon,0);
+            const top10Share = d.totalFGTon > 0 ? (top10.reduce((a,b)=>a+b.qtyTon,0)/d.totalFGTon*100) : 0;
+            setInsight('aiTopSkuInsight', `<div class="title">Insight Top Stock SKU</div>Top 5 SKU menyumbang ${'<span class="metric">'+fmtDec(top5Ton)+' Ton</span>'}, sementara 10 SKU teratas menyumbang sekitar ${'<span class="metric">'+fmtDec(top10Share)+'%</span>'} dari total FG. Konsentrasi tinggi berarti pengelolaan 10 SKU ini akan memberi dampak terbesar terhadap kapasitas gudang dan cash conversion.`);
 
+            // 4) Outflow SKU
+            const outCanvas = document.getElementById('aiOutflowChart');
+            if (outCanvas) {
+                if (window.aiOutflowChartInstance) window.aiOutflowChartInstance.destroy();
+                const outflow = d.skuMovementTop.filter(x=>x.outTon>0).sort((a,b)=>b.outTon-a.outTon).slice(0,10).reverse();
+                window.aiOutflowChartInstance = new Chart(outCanvas.getContext('2d'), {
+                    type:'bar',
+                    data:{labels:outflow.map(x=>x.sku),datasets:[{label:'OUT (Ton)',data:outflow.map(x=>x.outTon),backgroundColor:'rgba(255,77,109,.78)',borderColor:'#FF4D6D',borderWidth:1,borderRadius:6}]},
+                    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>` OUT: ${fmtDec(ctx.raw)} Ton`}}},scales:{x:{ticks:{color:'#B8C0D9',font:{size:9}}},y:{ticks:{color:'#B8C0D9',font:{size:10}}}}}
+                });
+            }
+            const outflowTop = d.skuMovementTop.filter(x=>x.outTon>0).sort((a,b)=>b.outTon-a.outTon).slice(0,5);
+            const outflow5 = outflowTop.reduce((a,b)=>a+b.outTon,0);
+            setInsight('aiOutflowInsight', `<div class="title">Insight OUTFLOW</div>5 SKU dengan outflow tertinggi menyumbang sekitar <span class="metric">${fmtDec(outflow5)} Ton</span> pada periode MTD. SKU tersebut menjadi kandidat utama untuk dipantau coverage, replenishment, dan risiko stock-out. ${outflowTop[0] ? `SKU dengan outflow tertinggi adalah <span class="metric">${outflowTop[0].sku}</span> (${fmtDec(outflowTop[0].outTon)} Ton).` : ''}`);
+
+            // 5) Segment mix
             const segCanvas = document.getElementById('aiSegmentChart');
             if (segCanvas) {
                 if (aiSegmentChartInstance) aiSegmentChartInstance.destroy();
-                const entries = Object.entries(d.segmentTon);
+                const entries = Object.entries(d.segmentTon).sort((a,b)=>b[1]-a[1]);
                 aiSegmentChartInstance = new Chart(segCanvas.getContext('2d'), {
                     type:'doughnut',
-                    data:{labels:entries.map(x=>x[0]),datasets:[{data:entries.map(x=>x[1]),backgroundColor:['#00E5FF','#6D5DF6','#00D084','#FFB800'],borderColor:'#070B14',borderWidth:3}]},
-                    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#B8C0D9',font:{size:9},usePointStyle:true}}}}
+                    data:{labels:entries.map(x=>x[0]),datasets:[{data:entries.map(x=>x[1]),backgroundColor:['#00E5FF','#6D5DF6','#00D084','#FFB800','#FF4D6D'],borderColor:'#070B14',borderWidth:4}]},
+                    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:'#B8C0D9',font:{size:10},usePointStyle:true,padding:18}},tooltip:{callbacks:{label:(ctx)=>` ${ctx.label}: ${fmtDec(ctx.raw)} Ton`}}}}
                 });
             }
+            const segEntries = Object.entries(d.segmentTon).sort((a,b)=>b[1]-a[1]);
+            const leadSeg = segEntries[0];
+            const leadShare = leadSeg && d.totalFGTon > 0 ? leadSeg[1]/d.totalFGTon*100 : 0;
+            setInsight('aiSegmentInsight', `<div class="title">Insight Segment Mix</div>${leadSeg ? `Segment <span class="metric">${leadSeg[0]}</span> mendominasi dengan ${fmtDec(leadSeg[1])} Ton atau sekitar <span class="metric">${fmtDec(leadShare)}%</span> dari total FG.` : 'Belum ada data segment.'} Konsentrasi segment menunjukkan area demand dan ruang gudang yang paling dominan untuk diprioritaskan dalam perencanaan replenishment.`);
         }
 
         function updateAIVisuals() {
             updateAISnapshot();
             renderAICharts();
+            renderLocalRisk();
         }
 
         async function runAIStockAnalysis() {
@@ -2969,49 +3095,41 @@
 
             btn.disabled=true;
             btn.innerHTML='<i class="ph-bold ph-spinner-gap animate-spin"></i> Analyzing...';
-            status.innerText='Mengirim data MTD, SKU, segment, dan trend transaksi ke Gemini 3.6 Flash...';
+            status.innerText='Menganalisis KPI, trend, SKU, segment, risiko dan action plan...';
 
-            const prompt = `Anda adalah Senior Supply Chain & Warehouse Executive Analyst untuk perusahaan mortar.
-Analisis DATA DASHBOARD JSON secara mendalam, objektif, dan berbasis angka. Jangan mengarang angka dan jangan menambahkan asumsi seolah-olah fakta.
-Gunakan bahasa Indonesia profesional yang cocok untuk Management/Executive.
+            const prompt = `Anda adalah Senior Supply Chain & Warehouse Executive Analyst untuk perusahaan manufaktur mortar.
+Buat analisis komprehensif berdasarkan DATA DASHBOARD JSON berikut. Jangan mengarang angka. Gunakan Bahasa Indonesia profesional, jelas dan bernilai untuk Management Review.
 
-OUTPUT WAJIB 7 BAGIAN:
-1. EXECUTIVE SUMMARY — 1 paragraf, jelaskan kondisi stok saat ini dan implikasinya.
-2. PERFORMANCE — jelaskan IN vs OUT, net movement, trend harian, peak IN/OUT, dan utilisasi gudang.
-3. SKU ANALYSIS — soroti SKU terbesar, konsentrasi stok, SKU dengan outflow tinggi, serta potensi slow/fast moving bila data mendukung.
-4. SEGMENT ANALYSIS — Retail/Project/General dan kontribusinya.
-5. RISK ALERT — 3-5 risiko dengan alasan numerik.
-6. ROOT CAUSE / INTERPRETATION — jelaskan kemungkinan penyebab berdasarkan pola data, namun beri label jelas bila berupa interpretasi.
-7. RECOMMENDED ACTION — 5 tindakan prioritas yang konkret, operasional, dan bisa ditindaklanjuti.
+STRUKTUR OUTPUT WAJIB DAN DETAIL:
+A. EXECUTIVE SUMMARY (2-3 paragraf): kondisi stok, arah trend, kapasitas, implication terhadap operasi.
+B. PERFORMANCE ANALYSIS: IN vs OUT, net movement, average/day, peak day, pressure/accumulation.
+C. STOCK POSITION & CAPACITY: total FG, utilisasi gudang, buffer, concentration.
+D. SKU ANALYSIS: top stock, top outflow, fast/slow movement bila data mendukung, prioritas SKU.
+E. SEGMENT ANALYSIS: kontribusi segment, konsentrasi dan implication.
+F. RISK ALERT: 5 risiko paling material, masing-masing sertakan alasan/angka pendukung.
+G. ROOT CAUSE / INTERPRETATION: jelaskan pola yang terlihat; tandai interpretasi yang bukan fakta langsung.
+H. RECOMMENDED ACTION: 7 tindakan prioritas, pisahkan immediate (0-3 hari), short term (mingguan), monitoring.
+I. MANAGEMENT TAKEAWAY: 5 bullet keputusan utama untuk meeting.
 
-Tambahkan juga satu baris "MANAGEMENT TAKEAWAY" yang merangkum keputusan utama.
-Jangan mengulang semua angka; pilih angka yang paling material.
-Data periode MTD adalah snapshot sampai hari ini.
+Jangan hanya mengulang angka. Jelaskan 'so what', dampak operasional dan keputusan yang seharusnya diambil.
 DATA:
 ${JSON.stringify(payload)}`;
 
             try{
-                const res=await fetch(endpoint,{
-                    method:'POST',
-                    headers:{'Content-Type':'application/json'},
-                    body:JSON.stringify({model:GEMINI_MODEL,prompt,data:payload})
-                });
+                const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:GEMINI_MODEL,prompt,data:payload})});
                 const data=await res.json();
                 if(!res.ok) throw new Error(data?.error||data?.message||`HTTP ${res.status}`);
-                const text=(data.text||'').trim();
+                const text=(data.analysis||data.text||'').trim();
                 if(!text) throw new Error('AI tidak mengembalikan teks.');
 
-                result.innerHTML=`
-                    <div class="rounded-xl border border-accentPurple/20 bg-accentPurple/5 p-4 md:p-5">
-                        <div class="flex items-center gap-2 mb-4"><i class="ph-fill ph-sparkle text-accentPurple"></i><h4 class="text-white font-black text-sm">AI Executive Insight V3</h4><span class="ml-auto text-[8px] px-2 py-1 rounded bg-statusSuccess/10 text-statusSuccess border border-statusSuccess/20">GEMINI</span></div>
-                        <div class="text-[11px] text-textSecondary leading-relaxed">${renderAIText(text)}</div>
-                    </div>`;
-                status.innerText='Analisis AI selesai. Visual dan insight sudah diperbarui.';
-                showToast('AI Analysis','Analisis detail berhasil dibuat dengan Gemini 3.6 Flash.','success');
+                result.innerHTML=`<div class="prose-ai"><div class="ai-provenance"><span><i class="ph-fill ph-sparkle"></i> GEMINI ${data.model||GEMINI_MODEL}</span><span>Executive Analysis</span></div>${renderAIText(text)}</div>`;
+                status.innerText='Analisis komprehensif AI selesai. Scroll ke bawah untuk Executive Management Analysis.';
+                showToast('AI Analysis','Analisis komprehensif berhasil dibuat.','success');
+                document.getElementById('aiFinalAnalysisSection')?.scrollIntoView({behavior:'smooth',block:'start'});
             }catch(err){
                 console.error(err);
                 renderLocalAI();
-                status.innerText=`AI Proxy gagal digunakan: ${err.message}. Visual dashboard tetap tersedia dan Local Insight ditampilkan.`;
+                status.innerText=`AI gagal digunakan: ${err.message}. Visual dashboard tetap tersedia dan Local Insight ditampilkan.`;
                 showToast('AI Error','Fallback ke Local Insight.','warning');
             }finally{
                 btn.disabled=false;
@@ -3080,7 +3198,7 @@ ${JSON.stringify(payload)}`;
 
             const pTitle = document.getElementById('pageTitle'), pSub = document.getElementById('pageSubTitle'), icon = document.getElementById('pageTitleIcon'), iconContainer = document.getElementById('pageTitleIconContainer');
             if(tabName === 'stock') { pTitle.innerText = 'Finished Goods Stock Overview'; pSub.innerText = 'Real-time FG Analytics & Stock Monitoring Report'; icon.className = 'ph-fill ph-chart-polar text-2xl md:text-3xl text-accentCyan'; iconContainer.className = 'p-2.5 md:p-3.5 bg-gradient-to-br from-accentPurple/20 to-accentCyan/10 border border-accentPurple/30 rounded-xl md:rounded-2xl shadow-glow-purple'; }
-            else if(tabName === 'ai-analyst') { pTitle.innerText = 'AI Stock Analyst'; pSub.innerText = 'AI-powered Finished Goods analysis & executive insight'; icon.className = 'ph-fill ph-sparkle text-2xl md:text-3xl text-accentPurple'; iconContainer.className = 'p-2.5 md:p-3.5 bg-gradient-to-br from-accentPurple/20 to-pink-500/10 border border-accentPurple/30 rounded-xl md:rounded-2xl shadow-glow-purple'; }
+            else if(tabName === 'ai-analyst') { pTitle.innerText = 'AI Stock Intelligence Dashboard'; pSub.innerText = 'Comprehensive MTD Finished Goods analysis, visual analytics & executive management insight'; icon.className = 'ph-fill ph-sparkle text-2xl md:text-3xl text-accentPurple'; iconContainer.className = 'p-2.5 md:p-3.5 bg-gradient-to-br from-accentPurple/20 to-pink-500/10 border border-accentPurple/30 rounded-xl md:rounded-2xl shadow-glow-purple'; }
             else if(tabName === 'detail') { pTitle.innerText = 'Detail Master Data Stok'; pSub.innerText = 'Rincian Operasional & Master Item'; icon.className = 'ph-fill ph-database text-2xl md:text-3xl text-accentPurple'; iconContainer.className = 'p-2.5 md:p-3.5 bg-gradient-to-br from-accentPurple/20 to-accentCyan/10 border border-accentPurple/30 rounded-xl md:rounded-2xl shadow-glow-purple'; }
             else if(tabName === 'summary-only') { pTitle.innerText = 'Ringkasan Stok Overview'; pSub.innerText = 'Tabel Ringkasan Stok Finished Goods'; icon.className = 'ph-fill ph-table text-2xl md:text-3xl text-accentCyan'; iconContainer.className = 'p-2.5 md:p-3.5 bg-gradient-to-br from-accentPurple/20 to-accentCyan/10 border border-accentPurple/30 rounded-xl md:rounded-2xl shadow-glow-purple'; }
             else if(tabName === 'exec-report') { pTitle.innerText = 'Format Laporan Eksekutif'; pSub.innerText = 'Unduhan Tabel Pivot Profesional (Siap Cetak)'; icon.className = 'ph-fill ph-file-pdf text-2xl md:text-3xl text-statusSuccess'; iconContainer.className = 'p-2.5 md:p-3.5 bg-gradient-to-br from-statusSuccess/20 to-emerald-600/10 border border-statusSuccess/30 rounded-xl md:rounded-2xl shadow-glow-green'; }
