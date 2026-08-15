@@ -2942,7 +2942,10 @@
                     };
                 }
                 agg[key].zak += d.zak;
-                agg[key].ton += d.ton;
+                // TON mengikuti arah transaksi dari Qty (ZAK):
+                // Qty negatif (Delivery/OUT) => TON negatif.
+                const signedTon = Math.abs(Number(d.ton) || 0) * (Number(d.zak) < 0 ? -1 : 1);
+                agg[key].ton += signedTon;
             });
 
             const sortedAgg = Object.values(agg).sort((a, b) => {
@@ -3793,7 +3796,10 @@ ${JSON.stringify(payload)}`;
                     };
                 }
                 agg[key].zak += d.zak;
-                agg[key].ton += d.ton;
+                // TON mengikuti arah transaksi dari Qty (ZAK):
+                // Qty negatif (Delivery/OUT) => TON negatif.
+                const signedTon = Math.abs(Number(d.ton) || 0) * (Number(d.zak) < 0 ? -1 : 1);
+                agg[key].ton += signedTon;
             });
 
             const sortedAgg = Object.values(agg).sort((a, b) => {
