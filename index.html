@@ -2956,7 +2956,13 @@
             });
 
             let html = '';
+            let grandTotalZak = 0;
+            let grandTotalTon = 0;
+
             sortedAgg.forEach(item => {
+                grandTotalZak += Number(item.zak) || 0;
+                grandTotalTon += Number(item.ton) || 0;
+
                 html += `<tr class="table-row-hover border-b border-borderMain/30 text-textSecondary transition-colors">
                     <td class="px-3 md:px-6 py-2 md:py-3 font-mono text-[10px] md:text-xs text-accentCyan">${item.dateFormatted}</td>
                     <td class="px-3 md:px-6 py-2 md:py-3 font-bold text-white font-mono text-[10px] md:text-xs">${item.segment}</td>
@@ -2966,6 +2972,26 @@
                     <td class="px-3 md:px-6 py-2 md:py-3 text-right font-mono text-[10px] md:text-xs font-bold text-accentPurple">${fmtDec(item.ton)}</td>
                 </tr>`;
             });
+
+            // GRAND TOTAL dikelompokkan berdasarkan Jenis Transaksi.
+            // Contoh: Output Production dan Delivery masing-masing memiliki total ZAK/TON.
+            const grandByType = {};
+            sortedAgg.forEach(item => {
+                const type = String(item.type || 'LAINNYA').trim() || 'LAINNYA';
+                if (!grandByType[type]) grandByType[type] = { zak: 0, ton: 0 };
+                grandByType[type].zak += Number(item.zak) || 0;
+                grandByType[type].ton += Number(item.ton) || 0;
+            });
+
+            Object.entries(grandByType).forEach(([type, total]) => {
+                html += `<tr class="bg-[#c5d9f1] border-t-2 border-borderMain font-bold text-black">
+                    <td colspan="3" class="px-3 md:px-6 py-2.5 md:py-3 text-right uppercase text-[10px] md:text-xs">GRAND TOTAL - ${type}</td>
+                    <td class="px-3 md:px-6 py-2.5 md:py-3"></td>
+                    <td class="px-3 md:px-6 py-2.5 md:py-3 text-right font-mono text-[10px] md:text-xs">${fmtNum(total.zak)}</td>
+                    <td class="px-3 md:px-6 py-2.5 md:py-3 text-right font-mono text-[10px] md:text-xs">${fmtDec(total.ton)}</td>
+                </tr>`;
+            });
+
             tbody.innerHTML = html;
         }
 
@@ -3500,9 +3526,9 @@ ${JSON.stringify(payload)}`;
             setCell(2, 0, `Date: ${dateSelected} | Time Range: ${timeRangeText}`, styleFilter);
             
             ws['!merges'] = [
-                { s: {r:0, c:0}, e: {r:0, c:6} }, 
-                { s: {r:1, c:0}, e: {r:1, c:6} }, 
-                { s: {r:2, c:0}, e: {r:2, c:6} }
+                { s: {r:0, c:0}, e: {r:0, c:5} }, 
+                { s: {r:1, c:0}, e: {r:1, c:5} }, 
+                { s: {r:2, c:0}, e: {r:2, c:5} }
             ];
             
             const headers = ["Segment", "SKU Code", "Weight (KG)", "Stock In", "Stock Out", "Qty (ZAK)", "Qty (TON)"];
@@ -3837,12 +3863,12 @@ ${JSON.stringify(payload)}`;
             setCell(2, 0, `Periode: ${startStr || '-'} s/d ${endStr || '-'}`, styleFilter);
             
             ws['!merges'] = [
-                { s: {r:0, c:0}, e: {r:0, c:6} }, 
-                { s: {r:1, c:0}, e: {r:1, c:6} }, 
-                { s: {r:2, c:0}, e: {r:2, c:6} }
+                { s: {r:0, c:0}, e: {r:0, c:5} }, 
+                { s: {r:1, c:0}, e: {r:1, c:5} }, 
+                { s: {r:2, c:0}, e: {r:2, c:5} }
             ];
             
-            const headers = ["Tanggal Posting", "SEGMENT", "Jenis Transaksi", "SKU/ Produk", "Total Qty (ZAK)", "Total Qty (TON)"];
+            const headers = ["Tanggal Posting", "SEGMENT", "Jenis Transaksi", "SKU / Produk", "Total Qty (ZAK)", "Total Qty (TON)"];
             headers.forEach((h, i) => setCell(4, i, h, styleHeader));
 
             let currentRow = 5;
@@ -3860,18 +3886,39 @@ ${JSON.stringify(payload)}`;
                 currentRow++;
             });
 
-            // Grand Total harus lurus tepat di bawah kolom yang dijumlahkan:
-// kolom E = label, kolom F = Total Qty (ZAK), kolom G = Total Qty (TON).
-for(let c=0; c<4; c++) setCell(currentRow, c, "", styleGrandTotal);
-setCell(currentRow, 4, "GRAND TOTAL", {
-    ...styleGrandTotal,
-    alignment: { horizontal: "right", vertical: "center" }
-});
-setCell(currentRow, 5, grandTotalZak, styleGrandTotal, 'n', '#,##0');
-setCell(currentRow, 6, grandTotalTon, styleGrandTotal, 'n', '#,##0.0');
+            // GRAND TOTAL dikelompokkan berdasarkan Jenis Transaksi,
+            // sama seperti tabel di layar.
+            const grandByType = {};
+            sortedAgg.forEach(item => {
+                const type = String(item.type || 'LAINNYA').trim() || 'LAINNYA';
+                if (!grandByType[type]) grandByType[type] = { zak: 0, ton: 0 };
+                grandByType[type].zak += Number(item.zak) || 0;
+                grandByType[type].ton += Number(item.ton) || 0;
+            });
 
-            ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: currentRow, c: 6 } }); 
-            ws['!cols'] = [ { wch: 15 }, { wch: 25 }, { wch: 18 }, { wch: 15 }, { wch: 25 }, { wch: 15 }, { wch: 15 } ];
+            // Urutan GRAND TOTAL sama dengan urutan Jenis Transaksi yang pertama
+            // kali muncul pada tabel di layar.
+            const visibleTypeOrder = [];
+            sortedAgg.forEach(item => {
+                const type = String(item.type || 'LAINNYA').trim() || 'LAINNYA';
+                if (!visibleTypeOrder.includes(type)) visibleTypeOrder.push(type);
+            });
+
+            visibleTypeOrder.forEach(type => {
+                const total = grandByType[type] || { zak: 0, ton: 0 };
+                for(let c=0; c<3; c++) setCell(currentRow, c, "", styleGrandTotal);
+                setCell(currentRow, 3, `GRAND TOTAL - ${type}`, {
+                    ...styleGrandTotal,
+                    alignment: { horizontal: "right", vertical: "center" }
+                });
+                setCell(currentRow, 4, total.zak, styleGrandTotal, 'n', '#,##0');
+                setCell(currentRow, 5, total.ton, styleGrandTotal, 'n', '#,##0.0');
+                currentRow++;
+            });
+
+            currentRow--;
+            ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: currentRow, c: 5 } }); 
+            ws['!cols'] = [ { wch: 15 }, { wch: 15 }, { wch: 18 }, { wch: 25 }, { wch: 15 }, { wch: 15 } ];
             ws['!pageSetup'] = { paperSize: 9, orientation: 'landscape' };
             
             XLSX.utils.book_append_sheet(wb, ws, "Trans Summary");
