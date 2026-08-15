@@ -3877,7 +3877,8 @@ ${JSON.stringify(payload)}`;
 
             sortedAgg.forEach(item => {
                 setCell(currentRow, 0, item.dateFormatted, styleDataLeft);
-                setCell(currentRow, 1, item.produk, styleDataLeft);
+                // Segment harus mengikuti kolom SEGMENT pada tabel yang tampil.
+                setCell(currentRow, 1, item.segment, styleDataLeft);
                 setCell(currentRow, 2, item.type, styleDataLeft);
                 setCell(currentRow, 3, item.skuProduk, styleDataLeft);
                 setCell(currentRow, 4, getSkuWeight(item.skuProduk), styleDataRight, 'n', '#,##0.0');
