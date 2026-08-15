@@ -97,94 +97,73 @@
         const IntroScreen = ({ onComplete }) => {
             const [isVisible, setIsVisible] = useState(true);
             const [isClicked, setIsClicked] = useState(false);
-            const [hasStarted, setHasStarted] = useState(false);
-            const [videoEnded, setVideoEnded] = useState(false);
+            const [isMuted, setIsMuted] = useState(false);
             const videoRef = useRef(null);
-            const videoUrl = "buat_vidio_intro_dari_gambar_i.mp4";
 
-            const handleStartPlay = (e) => {
-                e.stopPropagation();
-                setHasStarted(true);
+            const videoUrl = "https://cdn.jsdelivr.net/gh/abihabudin02/tes@main/buat_vidio_intro_dari_gambar_i.mp4";
+
+            useEffect(() => {
                 if (videoRef.current) {
                     videoRef.current.play().catch(error => {
-                        console.error("Autoplay failed:", error);
-                        setVideoEnded(true);
+                        console.log("Autoplay dengan suara diblokir browser, mencoba memutar mode muted...", error);
+                        setIsMuted(true);
+                        videoRef.current.muted = true;
+                        videoRef.current.play().catch(err => console.error("Gagal memuat video:", err));
                     });
                 }
-                setTimeout(() => {
-                    setVideoEnded(true);
-                }, 10000);
-            };
+            }, []);
 
             const handleVideoEnd = () => {
-                setVideoEnded(true);
-            };
-
-            const handleVideoError = () => {
-                console.error("Error: Gagal memuat video lokal.");
-                setVideoEnded(true);
-            };
-
-            const handleEnterApp = () => {
                 setIsClicked(true);
+                // Delay sekejap untuk animasi fade out yang mulus, lalu unmount total
                 setTimeout(() => {
                     setIsVisible(false);
                     if (onComplete) onComplete();
-                }, 500);
+                }, 400);
+            };
+
+            const handleUnmute = (e) => {
+                e.stopPropagation();
+                setIsMuted(false);
+                if (videoRef.current) {
+                    videoRef.current.muted = false;
+                    videoRef.current.play();
+                }
             };
 
             if (!isVisible) return null;
 
             return (
-                <div className={`fixed inset-0 z-[9999] bg-slate-900 flex items-center justify-center ${isClicked ? 'animate-fadeOut pointer-events-none' : ''}`}>
+                <div className={`fixed inset-0 z-[9999] bg-black flex items-center justify-center transition-opacity duration-400 ${isClicked ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                     <div className="relative w-full h-full flex flex-col items-center justify-center bg-black">
                         <video 
                             ref={videoRef}
                             className="w-full h-full object-contain"
                             onEnded={handleVideoEnd}
-                            onError={handleVideoError}
+                            onError={() => handleVideoEnd()}
                             playsInline
+                            autoPlay
                         >
                             <source src={videoUrl} type="video/mp4" />
                             Browser Anda tidak mendukung tag video.
                         </video>
 
-                        {!hasStarted && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-30">
-                                <button 
-                                    onClick={handleStartPlay}
-                                    className="animate-bounce bg-blue-600 px-8 py-4 rounded-full text-white font-bold text-lg border-2 border-white/50 shadow-[0_0_20px_rgba(37,99,235,0.8)] flex items-center gap-3 hover:bg-blue-500 transition-colors"
-                                >
-                                    <LucideIcon name="PlayCircle" className="w-6 h-6" />
-                                    Putar Video Intro
-                                </button>
-                            </div>
-                        )}
-                        
-                        {videoEnded && !isClicked && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-30">
-                                 <button 
-                                    onClick={handleEnterApp}
-                                    className="animate-bounce bg-emerald-600 px-8 py-4 rounded-full text-white font-bold text-lg border-2 border-white/50 shadow-[0_0_20px_rgba(16,185,129,0.8)] flex items-center gap-3 hover:bg-emerald-500 transition-colors"
-                                >
-                                    <LucideIcon name="Box" className="w-6 h-6" />
-                                    Masuk ke Aplikasi
-                                </button>
-                            </div>
-                        )}
-                        
-                        {hasStarted && !videoEnded && !isClicked && (
-                             <button 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setVideoEnded(true);
-                                    if(videoRef.current) videoRef.current.pause();
-                                }}
-                                className="absolute bottom-6 right-6 px-4 py-2 bg-white/20 hover:bg-white/40 text-white rounded-lg backdrop-blur text-sm z-20 transition-colors border border-white/30"
+                        {isMuted && (
+                            <button 
+                                onClick={handleUnmute}
+                                className="absolute top-6 left-6 px-4 py-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-full backdrop-blur text-xs font-bold z-30 shadow-lg flex items-center gap-2 border border-white/30 animate-pulse"
                             >
-                                Lewati
+                                🔊 Nyalakan Suara
                             </button>
                         )}
+                        
+                        <button 
+                            Op
+                            onClick={handleVideoEnd}
+                            className="absolute bottom-6 right-6 px-4 py-2 bg-white/20 hover:bg-white/40 text-white rounded-lg backdrop-blur text-sm z-20 transition-colors border border-white/30"
+                        >
+                            Lewati Intro
+                        </button>
                     </div>
                 </div>
             );
